@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Calendar, MapPin, Users, Clock, Cloud, Sun, CloudRain } from 'lucide-react';
+import './App.css';
 
 const BasketballScheduler = () => {
   const [currentView, setCurrentView] = useState('games'); 
