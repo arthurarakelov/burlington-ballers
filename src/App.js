@@ -241,6 +241,51 @@ const BasketballScheduler = () => {
               <p className="text-sm font-light text-gray-500 tracking-widest">WHERE LEGENDS BEGIN</p>
             </div>
 
+            {/* Next Game Preview */}
+            {games.length > 0 && (
+              <div className="mb-16">
+                <div className="w-16 h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent mx-auto mb-8"></div>
+                
+                {(() => {
+                  // Find the next upcoming game
+                  const now = new Date();
+                  const upcomingGames = games.filter(game => {
+                    const gameDate = new Date(game.date + ' ' + game.time);
+                    return gameDate > now;
+                  }).sort((a, b) => {
+                    const dateA = new Date(a.date + ' ' + a.time);
+                    const dateB = new Date(b.date + ' ' + b.time);
+                    return dateA - dateB;
+                  });
+                  
+                  if (upcomingGames.length === 0) return null;
+                  
+                  const nextGame = upcomingGames[0];
+                  const WeatherIcon = nextGame.weather.icon;
+                  
+                  return (
+                    <div className="text-center space-y-4">
+                      <h3 className="text-xs font-light tracking-[0.3em] text-gray-500 uppercase">Next Game</h3>
+                      <div className="space-y-2">
+                        <p className="text-lg font-light text-gray-300">{nextGame.title}</p>
+                        <p className="text-sm text-gray-400">{nextGame.date} • {nextGame.time}</p>
+                        <div className="flex items-center justify-center gap-6 text-xs text-gray-500">
+                          <div className="flex items-center gap-1">
+                            <Users className="w-3 h-3" />
+                            <span>{nextGame.attendees.length} players</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <WeatherIcon className="w-3 h-3" />
+                            <span>{nextGame.weather.temp}° {nextGame.weather.condition}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
             {/* Minimal login */}
             <div className="space-y-8">
               <div className="relative">
@@ -249,7 +294,7 @@ const BasketballScheduler = () => {
                   placeholder="Your name"
                   value={userName}
                   onChange={(e) => setUserName(e.target.value)}
-                  className="w-full bg-transparent border-0 border-b border-gray-800 focus:border-orange-400 outline-none py-4 text-xl font-light placeholder-gray-600 transition-all duration-700 focus:placeholder-gray-400"
+                  className="w-full bg-transparent border-0 border-b border-gray-800 focus:border-orange-400 outline-none py-4 text-xl font-light placeholder-gray-600 text-center transition-all duration-700 focus:placeholder-gray-400"
                 />
                 <div className="absolute bottom-0 left-0 w-0 h-px bg-gradient-to-r from-orange-400 to-red-400 transition-all duration-700 focus-within:w-full"></div>
               </div>
@@ -257,7 +302,7 @@ const BasketballScheduler = () => {
               <button 
                 onClick={handleLogin}
                 disabled={userName.trim().length < 2}
-                className="w-full py-6 bg-transparent border border-gray-800 hover:border-orange-400 text-white font-light text-lg tracking-widest transition-all duration-700 hover:bg-orange-400/5 disabled:opacity-30 disabled:cursor-not-allowed group"
+                className="w-full py-6 bg-gradient-to-r from-orange-500/10 to-red-500/10 border border-orange-400/50 hover:border-orange-400 hover:from-orange-500/20 hover:to-red-500/20 text-white font-light text-lg tracking-widest transition-all duration-700 disabled:opacity-30 disabled:cursor-not-allowed disabled:border-gray-800 disabled:from-transparent disabled:to-transparent group"
               >
                 <span className="group-hover:tracking-[0.4em] transition-all duration-500">ENTER</span>
               </button>
