@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Calendar, MapPin, Users, Clock, Cloud, Sun, CloudRain } from 'lucide-react';
-import './App.css';
 
 const BasketballScheduler = () => {
   const [currentView, setCurrentView] = useState('games'); 
@@ -130,7 +129,7 @@ const BasketballScheduler = () => {
       weather: { temp: 75, condition: "perfect", icon: Sun }
     };
     setGames([...games, game]);
-    setNewGame({ location: '', date: getNextSaturday(), time: '11:00' });
+    setNewGame({ location: '', date: '', time: '' });
     setCurrentView('games');
   };
 
@@ -506,8 +505,4 @@ const BasketballScheduler = () => {
   );
 };
 
-function App() {
-  return <BasketballScheduler />;
-}
-
-export default App;
+export default BasketballScheduler;
