@@ -2,8 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { LOCATIONS } from '../../constants/locations';
 import { getNextSaturday, getTodayDate, getMaxDate, isValidGameDate, formatDateWithDay, convertTo12Hour } from '../../utils/dateUtils';
 import { weatherService } from '../../services/weatherService';
+import FloatingOrbs from '../ui/FloatingOrbs';
+import { useMouseTracking } from '../../hooks/useMouseTracking';
 
 const CreateGame = ({ onBack, onCreateGame }) => {
+  const mousePosition = useMouseTracking();
   const [newGame, setNewGame] = useState({
     location: '',
     date: '',
@@ -86,17 +89,25 @@ const CreateGame = ({ onBack, onCreateGame }) => {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      <div className="max-w-md mx-auto px-8 py-16">
-        <div className="flex items-center justify-between mb-16">
+    <div className="min-h-screen bg-black text-white relative overflow-hidden">
+      <FloatingOrbs mousePosition={mousePosition} />
+      
+      <div className="relative z-10">
+        <div className="max-w-md mx-auto px-8 py-16">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-20">
+          <div>
+            <h1 className="text-xl font-light tracking-wide text-white mb-1">
+              Burlington Ballers
+            </h1>
+            <p className="text-xs text-gray-400">Create New Game</p>
+          </div>
           <button 
             onClick={onBack}
-            className="text-gray-400 hover:text-orange-400 transition-all duration-500 text-sm font-light tracking-wide"
+            className="px-4 py-2 bg-transparent border border-gray-600 hover:border-gray-500 hover:bg-gray-500/10 text-gray-300 hover:text-white font-medium text-sm rounded-lg transition-colors duration-200"
           >
-            ← BACK
+            Back
           </button>
-          <h2 className="text-lg font-light tracking-[0.3em] text-gray-300">CREATE</h2>
-          <div className="w-12"></div>
         </div>
 
         <div className="space-y-12">
@@ -126,7 +137,7 @@ const CreateGame = ({ onBack, onCreateGame }) => {
               type="time"
               value={newGame.time}
               onChange={(e) => setNewGame({...newGame, time: e.target.value})}
-              className="w-full bg-transparent border-0 border-b border-gray-800 focus:border-orange-400 outline-none py-4 text-lg font-light text-gray-300 transition-all duration-700"
+              className="w-full bg-gray-900 border border-gray-700 focus:border-blue-400 outline-none px-4 py-3 text-lg font-light text-white rounded-lg transition-all duration-300"
             />
           </div>
 
@@ -139,11 +150,9 @@ const CreateGame = ({ onBack, onCreateGame }) => {
           <button 
             onClick={handleCreateGame}
             disabled={!newGame.location || !newGame.date || !newGame.time || creating || dateError}
-            className="w-full py-6 bg-transparent border border-gray-800 hover:border-orange-400 text-white font-light text-lg tracking-widest transition-all duration-700 hover:bg-orange-400/5 mt-16 group disabled:opacity-30 disabled:cursor-not-allowed"
+            className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-medium text-lg rounded-lg transition-colors duration-200 mt-16 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <span className="group-hover:tracking-[0.4em] transition-all duration-500">
-              {creating ? 'CREATING...' : 'LAUNCH'}
-            </span>
+            {creating ? 'Creating...' : 'Create Game'}
           </button>
           
           {/* Debug info */}
@@ -154,6 +163,7 @@ const CreateGame = ({ onBack, onCreateGame }) => {
           </div>
         </div>
       </div>
+    </div>
     </div>
   );
 };

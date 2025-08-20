@@ -103,6 +103,33 @@ export const gameService = {
     }
   },
 
+  // Update game time (only by organizer)
+  async updateGameTime(gameId, user, newTime) {
+    try {
+      // First verify the user is the organizer
+      const gameDoc = await getDoc(doc(db, 'games', gameId));
+      if (!gameDoc.exists()) {
+        throw new Error('Game not found');
+      }
+      
+      const gameData = gameDoc.data();
+      if (gameData.organizerUid !== user.uid) {
+        throw new Error('Only the game organizer can edit this game');
+      }
+      
+      // Update the game time
+      await updateDoc(doc(db, 'games', gameId), {
+        time: newTime,
+        updatedAt: serverTimestamp()
+      });
+      
+      console.log('Game time updated successfully');
+    } catch (error) {
+      console.error('Error updating game time:', error);
+      throw error;
+    }
+  },
+
   // Get all games
   async getGames() {
     try {

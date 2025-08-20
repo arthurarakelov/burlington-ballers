@@ -53,37 +53,36 @@ const BasketballScheduler = () => {
         });
       };
     } else {
-      // Show sample data when not authenticated
-      setGames([
-        {
-          id: 1,
-          title: "Wildwood Park Game",
-          location: "114 Bedford St, Burlington, MA 01803",
-          date: "Aug 18, 2025",
-          time: "6:00 PM",
-          organizer: "Mike Johnson",
-          attendees: [
-            { name: "Mike Johnson", phone: "Mike Johnson", arrivalTime: "6:00 PM" },
-            { name: "Sarah Chen", phone: "Sarah Chen", arrivalTime: "6:15 PM" },
-            { name: "Alex Rivera", phone: "Alex Rivera", arrivalTime: "6:30 PM" }
-          ],
-          weather: { temp: 78, condition: "perfect", icon: Sun }
-        },
-        {
-          id: 2,
-          title: "Simonds Park Game",
-          location: "10 Bedford St, Burlington, MA 01803", 
-          date: "Aug 20, 2025", 
-          time: "9:00 AM",
-          organizer: "Emma Davis",
-          attendees: [
-            { name: "Emma Davis", phone: "Emma Davis", arrivalTime: "8:45 AM" },
-            { name: "Chris Park", phone: "Chris Park", arrivalTime: "9:00 AM" }
-          ],
-          weather: { temp: 72, condition: "ideal", icon: Cloud }
+      // Show real game data even when not authenticated (read-only preview)
+      setLoading(true);
+      
+      const initializeGames = async () => {
+        try {
+          await gameService.deletePastGames();
+        } catch (error) {
+          console.error('Error cleaning up past games:', error);
         }
-      ]);
-      setLoading(false);
+        
+        const unsubscribe = gameService.subscribeToGames((gamesData) => {
+          console.log('Games loaded (not authenticated):', gamesData);
+          setGames(gamesData);
+          setLoading(false);
+        }, (error) => {
+          console.error('Error loading games:', error);
+          setLoading(false);
+          setGames([]);
+        });
+        
+        return unsubscribe;
+      };
+      
+      const unsubscribePromise = initializeGames();
+      
+      return () => {
+        unsubscribePromise.then(unsubscribe => {
+          if (unsubscribe) unsubscribe();
+        });
+      };
     }
   }, [user]);
 
@@ -208,6 +207,26 @@ const BasketballScheduler = () => {
     }
   };
 
+  const handleEditGameTime = async (gameId, newTime) => {
+    console.log('handleEditGameTime called:', { gameId, newTime, user });
+    if (!user) {
+      console.log('No user for editing game');
+      return;
+    }
+    
+    try {
+      console.log('Updating game time:', { gameId, newTime, user });
+      await gameService.updateGameTime(gameId, user, newTime);
+      console.log('Game time updated successfully');
+      
+      // Manually refresh the selected game
+      await refreshSelectedGame(gameId);
+    } catch (error) {
+      console.error('Error updating game time:', error);
+      alert('Error updating game time: ' + error.message);
+    }
+  };
+
   // Helper function to refresh the selected game data
   const refreshSelectedGame = async (gameId) => {
     try {
@@ -231,8 +250,14 @@ const BasketballScheduler = () => {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <div className="text-center">
-          <div className="text-6xl mb-4 animate-bounce">🏀</div>
-          <p className="text-lg font-light tracking-widest">LOADING...</p>
+          <div className="relative w-16 h-16 mx-auto mb-6">
+            <div className="absolute inset-0 border-4 border-gray-800 rounded-full"></div>
+            <div className="absolute inset-0 border-4 border-blue-500 rounded-full border-t-transparent animate-spin"></div>
+            <div className="absolute inset-2 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center">
+              <div className="w-2 h-2 bg-black rounded-full"></div>
+            </div>
+          </div>
+          <p className="text-sm font-medium text-gray-300">Loading...</p>
         </div>
       </div>
     );
@@ -265,6 +290,7 @@ const BasketballScheduler = () => {
         onDeclineGame={handleDeclineGame}
         onDeleteGame={handleDeleteGame}
         onEditLocation={handleEditGameLocation}
+        onEditTime={handleEditGameTime}
       />
     );
   }

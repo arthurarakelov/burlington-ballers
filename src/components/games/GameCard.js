@@ -21,11 +21,11 @@ const GameCard = ({ game, onClick }) => {
   return (
     <div 
       onClick={() => onClick(game)}
-      className="group cursor-pointer border-b border-gray-900 pb-8 last:border-0 hover:border-gray-800 transition-all duration-700"
+      className="group cursor-pointer bg-gray-900/50 hover:bg-gray-800/80 border border-gray-800 hover:border-gray-600 rounded-lg p-4 transition-all duration-200 hover:shadow-lg"
     >
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
-          <h3 className="text-lg font-light mb-2 group-hover:text-orange-400 transition-all duration-500">
+          <h3 className="text-lg font-light mb-2 group-hover:text-white transition-colors duration-300">
             {game.title}
           </h3>
           <div className="text-sm text-gray-400 font-light space-y-1">
@@ -50,8 +50,6 @@ const GameCard = ({ game, onClick }) => {
           </div>
         </div>
       </div>
-      
-      <div className="w-0 group-hover:w-8 h-px bg-gradient-to-r from-orange-400 to-transparent transition-all duration-700"></div>
     </div>
   );
 };
