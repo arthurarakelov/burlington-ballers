@@ -1,8 +1,21 @@
 import React from 'react';
-import { MapPin, Clock, Users } from 'lucide-react';
+import { MapPin, Clock, Users, Sun, Cloud, CloudRain, CloudDrizzle, CloudSnow, CloudLightning } from 'lucide-react';
 
 const GameCard = ({ game, onClick }) => {
-  const WeatherIcon = game.weather.icon;
+  // Get the correct weather icon component
+  const getWeatherIcon = (iconName) => {
+    const icons = {
+      Sun: Sun,
+      Cloud: Cloud,
+      CloudRain: CloudRain,
+      CloudDrizzle: CloudDrizzle,
+      CloudSnow: CloudSnow,
+      CloudLightning: CloudLightning
+    };
+    return icons[iconName] || Sun;
+  };
+  
+  const WeatherIcon = getWeatherIcon(game.weather.icon);
   
   return (
     <div 

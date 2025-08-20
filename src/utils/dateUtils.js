@@ -1,16 +1,23 @@
 export const getNextSaturday = () => {
   const today = new Date();
-  const daysUntilSaturday = (6 - today.getDay()) % 7; // Saturday is day 6
+  const currentDay = today.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
   const nextSaturday = new Date(today);
   
-  if (daysUntilSaturday === 0 && today.getDay() === 6) {
+  if (currentDay === 6) {
     // If today is Saturday, get next Saturday
     nextSaturday.setDate(today.getDate() + 7);
   } else {
-    nextSaturday.setDate(today.getDate() + (daysUntilSaturday || 7));
+    // Calculate days until next Saturday
+    const daysUntilSaturday = 6 - currentDay;
+    nextSaturday.setDate(today.getDate() + daysUntilSaturday);
   }
   
-  return nextSaturday.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+  // Use local date formatting to avoid timezone issues
+  const year = nextSaturday.getFullYear();
+  const month = String(nextSaturday.getMonth() + 1).padStart(2, '0');
+  const day = String(nextSaturday.getDate()).padStart(2, '0');
+  
+  return `${year}-${month}-${day}`; // Format as YYYY-MM-DD
 };
 
 export const convertTo24Hour = (time12h) => {

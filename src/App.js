@@ -188,6 +188,26 @@ const BasketballScheduler = () => {
     }
   };
 
+  const handleEditGameLocation = async (gameId, newLocation, newAddress) => {
+    console.log('handleEditGameLocation called:', { gameId, newLocation, newAddress, user });
+    if (!user) {
+      console.log('No user for editing game');
+      return;
+    }
+    
+    try {
+      console.log('Updating game location:', { gameId, newLocation, newAddress, user });
+      await gameService.updateGameLocation(gameId, user, newLocation, newAddress);
+      console.log('Game location updated successfully');
+      
+      // Manually refresh the selected game
+      await refreshSelectedGame(gameId);
+    } catch (error) {
+      console.error('Error updating game location:', error);
+      alert('Error updating game location: ' + error.message);
+    }
+  };
+
   // Helper function to refresh the selected game data
   const refreshSelectedGame = async (gameId) => {
     try {
@@ -244,6 +264,7 @@ const BasketballScheduler = () => {
         onLeaveGame={handleLeaveGame}
         onDeclineGame={handleDeclineGame}
         onDeleteGame={handleDeleteGame}
+        onEditLocation={handleEditGameLocation}
       />
     );
   }

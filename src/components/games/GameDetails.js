@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, Calendar, Users } from 'lucide-react';
+import { MapPin, Calendar, Users, Sun, Cloud, CloudRain, CloudDrizzle, CloudSnow, CloudLightning } from 'lucide-react';
 import { convertTo24Hour } from '../../utils/dateUtils';
+import { LOCATIONS } from '../../constants/locations';
 
-const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGame, onDeleteGame }) => {
+const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGame, onDeleteGame, onEditLocation }) => {
   const [arrivalTime, setArrivalTime] = useState('');
+  const [isEditingLocation, setIsEditingLocation] = useState(false);
+  const [editLocation, setEditLocation] = useState('');
 
   const attendees = (game.attendees || []).sort((a, b) => {
     const timeA = new Date(`1970/01/01 ${a.arrivalTime}`);
@@ -26,7 +29,21 @@ const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGam
     hasDeclined,
     arrivalTime
   });
-  const WeatherIcon = game.weather.icon;
+  
+  // Get the correct weather icon component
+  const getWeatherIcon = (iconName) => {
+    const icons = {
+      Sun: Sun,
+      Cloud: Cloud,
+      CloudRain: CloudRain,
+      CloudDrizzle: CloudDrizzle,
+      CloudSnow: CloudSnow,
+      CloudLightning: CloudLightning
+    };
+    return icons[iconName] || Sun;
+  };
+  
+  const WeatherIcon = getWeatherIcon(game.weather.icon);
 
   useEffect(() => {
     if (game) {
@@ -66,6 +83,28 @@ const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGam
     }
   };
 
+  const handleEditLocation = () => {
+    setIsEditingLocation(true);
+    // Find current location in LOCATIONS array
+    const currentLocationKey = LOCATIONS.find(loc => loc.address === game.location)?.value || '';
+    setEditLocation(currentLocationKey);
+  };
+
+  const handleSaveLocation = () => {
+    if (!editLocation || !onEditLocation) return;
+    
+    const selectedLocation = LOCATIONS.find(loc => loc.value === editLocation);
+    if (selectedLocation) {
+      onEditLocation(game.id, selectedLocation.value, selectedLocation.address);
+      setIsEditingLocation(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditingLocation(false);
+    setEditLocation('');
+  };
+
   return (
     <div className="min-h-screen bg-black text-white">
       <div className="max-w-md mx-auto px-8 py-16">
@@ -77,12 +116,20 @@ const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGam
             ← BACK
           </button>
           {isOrganizer && (
-            <button 
-              onClick={handleDeleteGame}
-              className="text-red-400 hover:text-red-300 transition-all duration-500 text-sm font-light tracking-wide"
-            >
-              DELETE
-            </button>
+            <div className="flex items-center gap-4">
+              <button 
+                onClick={handleEditLocation}
+                className="text-blue-400 hover:text-blue-300 transition-all duration-500 text-sm font-light tracking-wide"
+              >
+                EDIT
+              </button>
+              <button 
+                onClick={handleDeleteGame}
+                className="text-red-400 hover:text-red-300 transition-all duration-500 text-sm font-light tracking-wide"
+              >
+                DELETE
+              </button>
+            </div>
           )}
           {!isOrganizer && <div className="w-12"></div>}
         </div>
@@ -93,7 +140,37 @@ const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGam
           <div className="space-y-2 text-gray-400 font-light">
             <div className="flex items-center justify-center gap-3">
               <MapPin className="w-4 h-4" />
-              <span>{game.location}</span>
+              {isEditingLocation ? (
+                <div className="flex items-center gap-2">
+                  <select
+                    value={editLocation}
+                    onChange={(e) => setEditLocation(e.target.value)}
+                    className="bg-gray-900 border border-gray-700 rounded px-2 py-1 text-sm text-white"
+                  >
+                    <option value="">Select location</option>
+                    {LOCATIONS.map(loc => (
+                      <option key={loc.value} value={loc.value}>
+                        {loc.value}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={handleSaveLocation}
+                    disabled={!editLocation}
+                    className="text-green-400 hover:text-green-300 text-xs disabled:opacity-50"
+                  >
+                    SAVE
+                  </button>
+                  <button
+                    onClick={handleCancelEdit}
+                    className="text-gray-400 hover:text-gray-300 text-xs"
+                  >
+                    CANCEL
+                  </button>
+                </div>
+              ) : (
+                <span>{game.location}</span>
+              )}
             </div>
             <div className="flex items-center justify-center gap-3">
               <Calendar className="w-4 h-4" />

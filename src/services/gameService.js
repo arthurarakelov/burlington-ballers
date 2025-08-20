@@ -28,8 +28,7 @@ export const gameService = {
         organizerUid: user.uid,
         organizerName: user.name,
         organizerPhoto: user.photo,
-        createdAt: serverTimestamp(),
-        weather: gameData.weather || { temp: 75, condition: "TBD", icon: "Sun" }
+        createdAt: serverTimestamp()
       };
       
       const docRef = await addDoc(gamesRef, game);
@@ -71,6 +70,35 @@ export const gameService = {
       console.log('Game and related RSVPs deleted successfully');
     } catch (error) {
       console.error('Error deleting game:', error);
+      throw error;
+    }
+  },
+
+  // Update game location (only by organizer)
+  async updateGameLocation(gameId, user, newLocation, newAddress) {
+    try {
+      // First verify the user is the organizer
+      const gameDoc = await getDoc(doc(db, 'games', gameId));
+      if (!gameDoc.exists()) {
+        throw new Error('Game not found');
+      }
+      
+      const gameData = gameDoc.data();
+      if (gameData.organizerUid !== user.uid) {
+        throw new Error('Only the game organizer can edit this game');
+      }
+      
+      // Update the game location
+      await updateDoc(doc(db, 'games', gameId), {
+        title: `${newLocation} Game`,
+        location: newAddress,
+        address: newAddress,
+        updatedAt: serverTimestamp()
+      });
+      
+      console.log('Game location updated successfully');
+    } catch (error) {
+      console.error('Error updating game location:', error);
       throw error;
     }
   },

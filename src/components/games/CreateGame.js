@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { LOCATIONS } from '../../constants/locations';
 import { getNextSaturday, getTodayDate, getMaxDate, isValidGameDate } from '../../utils/dateUtils';
+import { weatherService } from '../../services/weatherService';
 
 const CreateGame = ({ onBack, onCreateGame }) => {
   const [newGame, setNewGame] = useState({
@@ -33,19 +34,31 @@ const CreateGame = ({ onBack, onCreateGame }) => {
     setCreating(true);
     setDateError('');
     
-    const selectedLocation = LOCATIONS.find(loc => loc.value === newGame.location);
-    const gameData = {
-      title: `${newGame.location} Game`,
-      location: selectedLocation.address,
-      address: selectedLocation.address,
-      date: newGame.date,
-      time: newGame.time,
-      weather: { temp: 75, condition: "perfect", icon: "Sun" }
-    };
-    
-    console.log('Submitting game data:', gameData);
-    
     try {
+      const selectedLocation = LOCATIONS.find(loc => loc.value === newGame.location);
+      
+      // Fetch real weather data
+      console.log('Fetching weather for', newGame.date, newGame.time);
+      let weather;
+      try {
+        weather = await weatherService.getWeatherData(newGame.date, newGame.time);
+        console.log('Weather data received:', weather);
+      } catch (weatherError) {
+        console.error('Weather service failed:', weatherError);
+        weather = { temp: 75, condition: "TBD", icon: "Sun" };
+      }
+      
+      const gameData = {
+        title: `${newGame.location} Game`,
+        location: selectedLocation.address,
+        address: selectedLocation.address,
+        date: newGame.date,
+        time: newGame.time,
+        weather: weather
+      };
+      
+      console.log('Submitting game data:', gameData);
+      
       await onCreateGame(gameData);
       // Only reset form after successful creation
       setNewGame({ location: '', date: '', time: '11:00' });
