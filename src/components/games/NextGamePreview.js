@@ -1,5 +1,6 @@
 import React from 'react';
 import { Users } from 'lucide-react';
+import { formatDateWithDay } from '../../utils/dateUtils';
 
 const NextGamePreview = ({ games }) => {
   const now = new Date();
@@ -25,7 +26,7 @@ const NextGamePreview = ({ games }) => {
         <h3 className="text-xs font-light tracking-[0.3em] text-gray-500 uppercase">Next Game</h3>
         <div className="space-y-2">
           <p className="text-lg font-light text-gray-300">{nextGame.title}</p>
-          <p className="text-sm text-gray-400">{nextGame.date} • {nextGame.time}</p>
+          <p className="text-sm text-gray-400">{formatDateWithDay(nextGame.date)} • {nextGame.time}</p>
           <div className="flex items-center justify-center gap-6 text-xs text-gray-500">
             <div className="flex items-center gap-1">
               <Users className="w-3 h-3" />

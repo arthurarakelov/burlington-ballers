@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { LOCATIONS } from '../../constants/locations';
-import { getNextSaturday, getTodayDate, getMaxDate, isValidGameDate } from '../../utils/dateUtils';
+import { getNextSaturday, getTodayDate, getMaxDate, isValidGameDate, formatDateWithDay, convertTo12Hour } from '../../utils/dateUtils';
 import { weatherService } from '../../services/weatherService';
 
 const CreateGame = ({ onBack, onCreateGame }) => {
@@ -53,7 +53,7 @@ const CreateGame = ({ onBack, onCreateGame }) => {
         location: selectedLocation.address,
         address: selectedLocation.address,
         date: newGame.date,
-        time: newGame.time,
+        time: convertTo12Hour(newGame.time),
         weather: weather
       };
       
@@ -149,7 +149,7 @@ const CreateGame = ({ onBack, onCreateGame }) => {
           {/* Debug info */}
           <div className="mt-8 text-xs text-gray-600">
             <p>Location: {newGame.location || 'Not selected'}</p>
-            <p>Date: {newGame.date || 'Not set'}</p>
+            <p>Date: {newGame.date ? formatDateWithDay(newGame.date) : 'Not set'}</p>
             <p>Time: {newGame.time || 'Not set'}</p>
           </div>
         </div>

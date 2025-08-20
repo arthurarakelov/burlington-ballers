@@ -1,5 +1,6 @@
 import React from 'react';
 import { MapPin, Clock, Users, Sun, Cloud, CloudRain, CloudDrizzle, CloudSnow, CloudLightning } from 'lucide-react';
+import { formatDateWithDay } from '../../utils/dateUtils';
 
 const GameCard = ({ game, onClick }) => {
   // Get the correct weather icon component
@@ -34,7 +35,7 @@ const GameCard = ({ game, onClick }) => {
             </div>
             <div className="flex items-center gap-2">
               <Clock className="w-3 h-3" />
-              <span>{game.date} • {game.time}</span>
+              <span>{formatDateWithDay(game.date)} • {game.time}</span>
             </div>
           </div>
         </div>

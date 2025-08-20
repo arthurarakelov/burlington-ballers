@@ -75,3 +75,13 @@ export const isGameInPast = (dateString, timeString) => {
   const now = new Date();
   return gameDateTime < now;
 };
+
+// Format date to include day of the week (e.g., "Saturday, 2025-08-23")
+export const formatDateWithDay = (dateString) => {
+  // Parse the date string as local time to avoid timezone issues
+  const [year, month, day] = dateString.split('-');
+  const date = new Date(year, month - 1, day); // month is 0-indexed
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const dayOfWeek = dayNames[date.getDay()];
+  return `${dayOfWeek}, ${dateString}`;
+};

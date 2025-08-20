@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { MapPin, Calendar, Users, Sun, Cloud, CloudRain, CloudDrizzle, CloudSnow, CloudLightning } from 'lucide-react';
-import { convertTo24Hour } from '../../utils/dateUtils';
+import { convertTo24Hour, formatDateWithDay } from '../../utils/dateUtils';
 import { LOCATIONS } from '../../constants/locations';
 
 const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGame, onDeleteGame, onEditLocation }) => {
@@ -69,10 +69,9 @@ const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGam
     console.log('DECLINE clicked:', { gameId: game.id, user });
     if (onDeclineGame) {
       onDeclineGame(game.id);
-    } else {
-      console.log('onDeclineGame handler not provided');
     }
   };
+
 
   const handleDeleteGame = () => {
     console.log('DELETE clicked:', { gameId: game.id, user });
@@ -107,7 +106,7 @@ const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGam
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <div className="max-w-md mx-auto px-8 py-16">
+        <div className="max-w-md mx-auto px-8 py-16">
         <div className="flex items-center justify-between mb-16">
           <button 
             onClick={onBack}
@@ -174,7 +173,7 @@ const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGam
             </div>
             <div className="flex items-center justify-center gap-3">
               <Calendar className="w-4 h-4" />
-              <span>{game.date} • {game.time}</span>
+              <span>{formatDateWithDay(game.date)} • {game.time}</span>
             </div>
             <div className="flex items-center justify-center gap-3">
               <WeatherIcon className="w-4 h-4" />
@@ -315,8 +314,8 @@ const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGam
             </div>
           </div>
         ) : null}
+        </div>
       </div>
-    </div>
   );
 };
 
