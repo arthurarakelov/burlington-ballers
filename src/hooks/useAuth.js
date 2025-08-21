@@ -6,7 +6,7 @@ import {
   signInWithRedirect,
   getRedirectResult
 } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, collection, query, where, getDocs, updateDoc } from 'firebase/firestore';
 import { auth, googleProvider, db } from '../services/firebase';
 
 export const useAuth = () => {
@@ -17,25 +17,48 @@ export const useAuth = () => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        // Create or update user document in Firestore
-        const userDoc = {
-          uid: firebaseUser.uid,
-          name: firebaseUser.displayName,
-          email: firebaseUser.email,
-          photo: firebaseUser.photoURL,
-          lastLogin: new Date()
-        };
-
         try {
-          await setDoc(doc(db, 'users', firebaseUser.uid), userDoc, { merge: true });
-          setUser({
-            uid: firebaseUser.uid,
-            name: firebaseUser.displayName,
-            email: firebaseUser.email,
-            photo: firebaseUser.photoURL
-          });
+          // Check if user document exists
+          const userDocRef = doc(db, 'users', firebaseUser.uid);
+          const userDocSnap = await getDoc(userDocRef);
+          
+          if (userDocSnap.exists()) {
+            // User exists, get their data including custom username
+            const userData = userDocSnap.data();
+            
+            setUser({
+              uid: firebaseUser.uid,
+              name: userData.username || firebaseUser.displayName, // Use custom username if available
+              email: firebaseUser.email,
+              photo: firebaseUser.photoURL,
+              username: userData.username,
+              needsUsernameSetup: !userData.username // Flag if username setup is needed
+            });
+            
+            // Update last login
+            await setDoc(userDocRef, { lastLogin: new Date() }, { merge: true });
+          } else {
+            // New user, create basic document but flag that username setup is needed
+            const userDoc = {
+              uid: firebaseUser.uid,
+              googleName: firebaseUser.displayName, // Store original Google name
+              email: firebaseUser.email,
+              photo: firebaseUser.photoURL,
+              lastLogin: new Date(),
+              createdAt: new Date()
+            };
+            
+            await setDoc(userDocRef, userDoc, { merge: true });
+            setUser({
+              uid: firebaseUser.uid,
+              name: firebaseUser.displayName,
+              email: firebaseUser.email,
+              photo: firebaseUser.photoURL,
+              needsUsernameSetup: true // New user needs to set username
+            });
+          }
         } catch (err) {
-          console.error('Error creating user document:', err);
+          console.error('Error handling user document:', err);
           setError(err.message);
         }
       } else {
@@ -99,11 +122,71 @@ export const useAuth = () => {
     }
   };
 
+  const setUsername = async (username) => {
+    if (!user?.uid) {
+      throw new Error('No authenticated user');
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Update user document with username
+      const userDocRef = doc(db, 'users', user.uid);
+      await setDoc(userDocRef, { 
+        username,
+        usernameSetAt: new Date()
+      }, { merge: true });
+      
+      // Update existing RSVPs to use the new username
+      await updateUserRSVPs(user.uid, username);
+      
+      // Update local user state
+      setUser(prev => ({
+        ...prev,
+        name: username,
+        username,
+        needsUsernameSetup: false
+      }));
+      
+      setLoading(false);
+    } catch (error) {
+      console.error('Error setting username:', error);
+      setError(error.message);
+      setLoading(false);
+      throw error;
+    }
+  };
+
+  // Helper function to update existing RSVPs with new username
+  const updateUserRSVPs = async (userUid, newUsername) => {
+    try {
+      // Get all RSVPs for this user
+      const rsvpsRef = collection(db, 'rsvps');
+      const userRSVPsQuery = query(rsvpsRef, where('userUid', '==', userUid));
+      const rsvpSnapshot = await getDocs(userRSVPsQuery);
+      
+      // Update each RSVP with the new username
+      const updatePromises = rsvpSnapshot.docs.map(rsvpDoc => {
+        return updateDoc(doc(db, 'rsvps', rsvpDoc.id), {
+          userName: newUsername,
+          updatedAt: new Date()
+        });
+      });
+      
+      await Promise.all(updatePromises);
+    } catch (error) {
+      console.error('Error updating RSVPs with new username:', error);
+      // Don't throw - this is not critical to the username setting process
+    }
+  };
+
   return {
     user,
     loading,
     error,
     signInWithGoogle,
-    logout
+    logout,
+    setUsername
   };
 };

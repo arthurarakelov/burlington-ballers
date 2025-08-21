@@ -197,10 +197,6 @@ export const gameService = {
       if (userDoc.exists()) {
         const userData = userDoc.data();
         userName = userData.username || userData.googleName || user.name;
-        console.log('Creating RSVP - User data from DB:', userData);
-        console.log('Creating RSVP - Final username:', userName);
-      } else {
-        console.log('Creating RSVP - No user document found, using provided name:', userName);
       }
       
       const rsvpData = {

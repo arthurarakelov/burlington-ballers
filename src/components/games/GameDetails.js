@@ -23,16 +23,6 @@ const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGam
   const declinedCount = game.declined?.length || 0;
   const isOrganizer = game.organizerUid === user?.uid;
 
-  // Debug logging
-  console.log('GameDetails Debug:', {
-    gameId: game.id,
-    attendees,
-    declined: game.declined,
-    user,
-    isAttending,
-    hasDeclined,
-    arrivalTime
-  });
   
   // Get the correct weather icon component
   const getWeatherIcon = (iconName) => {

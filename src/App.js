@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Sun, Cloud } from 'lucide-react';
 import LoginScreen from './components/auth/LoginScreen';
+import UsernameSetup from './components/auth/UsernameSetup';
 import GameDashboard from './components/games/GameDashboard';
 import GameDetails from './components/games/GameDetails';
 import CreateGame from './components/games/CreateGame';
@@ -10,7 +11,7 @@ import { gameService } from './services/gameService';
 import './App.css';
 
 const BasketballScheduler = () => {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, setUsername } = useAuth();
   const [currentView, setCurrentView] = useState('games'); 
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -245,6 +246,53 @@ const BasketballScheduler = () => {
     }
   };
 
+  const handleUsernameSet = async (username) => {
+    try {
+      await setUsername(username);
+    } catch (error) {
+      console.error('Error setting username:', error);
+      // Error is handled in the useAuth hook
+    }
+  };
+
+  // Temporary debug function to manually update RSVPs - you can call this from console
+  window.updateMyRSVPs = async () => {
+    if (!user?.uid) {
+      console.log('No user logged in');
+      return;
+    }
+    
+    try {
+      const { collection, query, where, getDocs, updateDoc, doc } = await import('firebase/firestore');
+      const { db } = await import('./services/firebase');
+      
+      // Get all RSVPs for current user
+      const rsvpsRef = collection(db, 'rsvps');
+      const userRSVPsQuery = query(rsvpsRef, where('userUid', '==', user.uid));
+      const rsvpSnapshot = await getDocs(userRSVPsQuery);
+      
+      console.log(`Found ${rsvpSnapshot.docs.length} RSVPs to update`);
+      
+      // Update each RSVP with the current username
+      const updatePromises = rsvpSnapshot.docs.map(rsvpDoc => {
+        const rsvpData = rsvpDoc.data();
+        console.log(`Updating RSVP ${rsvpDoc.id} from "${rsvpData.userName}" to "${user.name}"`);
+        return updateDoc(doc(db, 'rsvps', rsvpDoc.id), {
+          userName: user.name,
+          updatedAt: new Date()
+        });
+      });
+      
+      await Promise.all(updatePromises);
+      console.log(`Successfully updated ${updatePromises.length} RSVPs`);
+      
+      // Refresh the page to see changes
+      window.location.reload();
+    } catch (error) {
+      console.error('Error updating RSVPs:', error);
+    }
+  };
+
   // Show loading screen during authentication check
   if (authLoading) {
     return (
@@ -267,6 +315,17 @@ const BasketballScheduler = () => {
   if (!user) {
     return (
       <LoginScreen games={games} />
+    );
+  }
+
+  // Show username setup if needed
+  if (user.needsUsernameSetup) {
+    return (
+      <UsernameSetup 
+        user={user}
+        onUsernameSet={handleUsernameSet}
+        loading={authLoading}
+      />
     );
   }
 
