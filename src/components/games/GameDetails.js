@@ -43,36 +43,27 @@ const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGam
     if (game) {
       setArrivalTime(convertTo24Hour(game.time));
     }
-  }, [game]);
+  }, [game.id, game.time]);
 
   const handleJoinGame = () => {
-    console.log('JOIN clicked:', { gameId: game.id, arrivalTime, user });
     if (arrivalTime) {
       onJoinGame(game.id, arrivalTime);
-    } else {
-      console.log('No arrival time set');
     }
   };
 
   const handleLeaveGame = () => {
-    console.log('LEAVE clicked:', { gameId: game.id, user });
     onLeaveGame(game.id);
   };
 
   const handleDeclineGame = () => {
-    console.log('DECLINE clicked:', { gameId: game.id, user });
     if (onDeclineGame) {
       onDeclineGame(game.id);
     }
   };
 
-
   const handleDeleteGame = () => {
-    console.log('DELETE clicked:', { gameId: game.id, user });
     if (onDeleteGame) {
       onDeleteGame(game.id);
-    } else {
-      console.log('onDeleteGame handler not provided');
     }
   };
 
