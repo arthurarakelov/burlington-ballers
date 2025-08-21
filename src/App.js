@@ -15,6 +15,7 @@ const BasketballScheduler = () => {
   const [currentView, setCurrentView] = useState('games'); 
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   
   const [games, setGames] = useState([]);
 
@@ -99,7 +100,7 @@ const BasketballScheduler = () => {
     try {
       const gameId = await gameService.createGame(gameData, user);
       console.log('Game created with ID:', gameId);
-      setCurrentView('games');
+      transitionToView('games');
     } catch (error) {
       console.error('Error creating game:', error);
       alert('Error creating game: ' + error.message);
@@ -180,8 +181,7 @@ const BasketballScheduler = () => {
       console.log('Game deleted successfully');
       
       // Navigate back to games list
-      setSelectedEvent(null);
-      setCurrentView('games');
+      transitionBack();
     } catch (error) {
       console.error('Error deleting game:', error);
       alert('Error deleting game: ' + error.message);
@@ -253,6 +253,32 @@ const BasketballScheduler = () => {
       console.error('Error setting username:', error);
       // Error is handled in the useAuth hook
     }
+  };
+
+  // Enhanced transition helpers
+  const transitionToGame = (game) => {
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setSelectedEvent(game);
+      setTimeout(() => setIsTransitioning(false), 50);
+    }, 300);
+  };
+
+  const transitionToView = (view) => {
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setCurrentView(view);
+      setTimeout(() => setIsTransitioning(false), 50);
+    }, 300);
+  };
+
+  const transitionBack = () => {
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setSelectedEvent(null);
+      setCurrentView('games');
+      setTimeout(() => setIsTransitioning(false), 50);
+    }, 300);
   };
 
   // Temporary debug function to manually update RSVPs - you can call this from console
@@ -329,39 +355,51 @@ const BasketballScheduler = () => {
     );
   }
 
-  if (currentView === 'create') {
-    return (
-      <CreateGame 
-        onBack={() => setCurrentView('games')}
-        onCreateGame={handleCreateGame}
-      />
-    );
-  }
+  const mainContent = () => {
+    if (currentView === 'create') {
+      return (
+        <CreateGame 
+          onBack={() => transitionToView('games')}
+          onCreateGame={handleCreateGame}
+        />
+      );
+    }
 
-  if (selectedEvent) {
+    if (selectedEvent) {
+      return (
+        <GameDetails 
+          game={selectedEvent}
+          user={user}
+          onBack={() => transitionBack()}
+          onJoinGame={handleAttendGame}
+          onLeaveGame={handleLeaveGame}
+          onDeclineGame={handleDeclineGame}
+          onDeleteGame={handleDeleteGame}
+          onEditLocation={handleEditGameLocation}
+          onEditTime={handleEditGameTime}
+        />
+      );
+    }
+
     return (
-      <GameDetails 
-        game={selectedEvent}
+      <GameDashboard 
         user={user}
-        onBack={() => setSelectedEvent(null)}
-        onJoinGame={handleAttendGame}
-        onLeaveGame={handleLeaveGame}
-        onDeclineGame={handleDeclineGame}
-        onDeleteGame={handleDeleteGame}
-        onEditLocation={handleEditGameLocation}
-        onEditTime={handleEditGameTime}
+        games={games}
+        loading={loading}
+        onCreateGame={() => transitionToView('create')}
+        onSelectGame={transitionToGame}
       />
     );
-  }
+  };
 
   return (
-    <GameDashboard 
-      user={user}
-      games={games}
-      loading={loading}
-      onCreateGame={() => setCurrentView('create')}
-      onSelectGame={setSelectedEvent}
-    />
+    <div className={`transition-all duration-300 ease-in-out ${
+      isTransitioning 
+        ? 'opacity-0 transform scale-95 translate-y-2' 
+        : 'opacity-100 transform scale-100 translate-y-0'
+    }`}>
+      {mainContent()}
+    </div>
   );
 };
 
