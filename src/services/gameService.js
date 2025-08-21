@@ -26,8 +26,9 @@ export const gameService = {
       const game = {
         ...gameData,
         organizerUid: user.uid,
-        organizerName: user.name,
+        organizerName: user.name, // This now uses the custom username
         organizerPhoto: user.photo,
+        organizerEmail: user.email, // Store email for potential notifications
         createdAt: serverTimestamp()
       };
       
@@ -188,11 +189,26 @@ export const gameService = {
   // Create or update RSVP
   async createRSVP(gameId, user, status, arrivalTime = null) {
     try {
+      // Always get the latest user data to ensure we have the most recent username
+      let userName = user.name;
+      let userEmail = user.email;
+      
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        userName = userData.username || userData.googleName || user.name;
+        console.log('Creating RSVP - User data from DB:', userData);
+        console.log('Creating RSVP - Final username:', userName);
+      } else {
+        console.log('Creating RSVP - No user document found, using provided name:', userName);
+      }
+      
       const rsvpData = {
         gameId,
         userUid: user.uid,
-        userName: user.name,
+        userName: userName, // Use the latest username from DB
         userPhoto: user.photo,
+        userEmail: userEmail, // Store email for potential reminders
         status, // 'attending' or 'declined'
         arrivalTime,
         createdAt: serverTimestamp(),
@@ -203,8 +219,9 @@ export const gameService = {
       const existingRSVP = await this.getUserRSVP(gameId, user.uid);
       
       if (existingRSVP) {
-        // Update existing RSVP
+        // Update existing RSVP with latest username
         await updateDoc(doc(db, 'rsvps', existingRSVP.id), {
+          userName: userName, // Update username too
           status,
           arrivalTime,
           updatedAt: serverTimestamp()
