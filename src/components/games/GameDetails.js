@@ -295,12 +295,36 @@ const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGam
             
             <div className="space-y-6">
               <h4 className="text-center text-base font-medium text-gray-300">When will you arrive?</h4>
-              <input
-                type="time"
-                value={arrivalTime}
-                onChange={(e) => setArrivalTime(e.target.value)}
-                className="w-full bg-gray-900 border border-gray-700 focus:border-blue-400 outline-none px-4 py-3 text-lg font-light text-white rounded-lg transition-all duration-300"
-              />
+              <div className="flex justify-center gap-2">
+                <select
+                  value={arrivalTime.split(':')[0] || '11'}
+                  onChange={(e) => {
+                    const minutes = arrivalTime.split(':')[1] || '00';
+                    setArrivalTime(`${e.target.value}:${minutes}`);
+                  }}
+                  className="bg-gray-900 border border-gray-700 focus:border-blue-400 outline-none px-3 py-3 text-lg font-light text-white rounded-lg transition-all duration-300 text-center"
+                >
+                  {Array.from({length: 12}, (_, i) => i + 1).map(hour => (
+                    <option key={hour} value={hour.toString().padStart(2, '0')} className="bg-gray-900">{hour}</option>
+                  ))}
+                  {Array.from({length: 12}, (_, i) => i + 13).map(hour => (
+                    <option key={hour} value={hour.toString()} className="bg-gray-900">{hour}</option>
+                  ))}
+                </select>
+                <span className="flex items-center text-gray-400 text-lg">:</span>
+                <select
+                  value={arrivalTime.split(':')[1] || '00'}
+                  onChange={(e) => {
+                    const hours = arrivalTime.split(':')[0] || '11';
+                    setArrivalTime(`${hours}:${e.target.value}`);
+                  }}
+                  className="bg-gray-900 border border-gray-700 focus:border-blue-400 outline-none px-3 py-3 text-lg font-light text-white rounded-lg transition-all duration-300 text-center"
+                >
+                  {['00', '15', '30', '45'].map(minute => (
+                    <option key={minute} value={minute} className="bg-gray-900">{minute}</option>
+                  ))}
+                </select>
+              </div>
               
               <div className="grid grid-cols-2 gap-4">
                 <Button 
@@ -344,12 +368,36 @@ const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGam
             
             <div className="space-y-6">
               <h4 className="text-center text-sm font-light text-gray-500">Change your mind?</h4>
-              <input
-                type="time"
-                value={arrivalTime}
-                onChange={(e) => setArrivalTime(e.target.value)}
-                className="w-full bg-gray-900 border border-gray-700 focus:border-blue-400 outline-none px-4 py-3 text-lg font-light text-white rounded-lg transition-all duration-300"
-              />
+              <div className="flex justify-center gap-2">
+                <select
+                  value={arrivalTime.split(':')[0] || '11'}
+                  onChange={(e) => {
+                    const minutes = arrivalTime.split(':')[1] || '00';
+                    setArrivalTime(`${e.target.value}:${minutes}`);
+                  }}
+                  className="bg-gray-900 border border-gray-700 focus:border-blue-400 outline-none px-3 py-3 text-lg font-light text-white rounded-lg transition-all duration-300 text-center"
+                >
+                  {Array.from({length: 12}, (_, i) => i + 1).map(hour => (
+                    <option key={hour} value={hour.toString().padStart(2, '0')} className="bg-gray-900">{hour}</option>
+                  ))}
+                  {Array.from({length: 12}, (_, i) => i + 13).map(hour => (
+                    <option key={hour} value={hour.toString()} className="bg-gray-900">{hour}</option>
+                  ))}
+                </select>
+                <span className="flex items-center text-gray-400 text-lg">:</span>
+                <select
+                  value={arrivalTime.split(':')[1] || '00'}
+                  onChange={(e) => {
+                    const hours = arrivalTime.split(':')[0] || '11';
+                    setArrivalTime(`${hours}:${e.target.value}`);
+                  }}
+                  className="bg-gray-900 border border-gray-700 focus:border-blue-400 outline-none px-3 py-3 text-lg font-light text-white rounded-lg transition-all duration-300 text-center"
+                >
+                  {['00', '15', '30', '45'].map(minute => (
+                    <option key={minute} value={minute} className="bg-gray-900">{minute}</option>
+                  ))}
+                </select>
+              </div>
               
               <Button 
                 onClick={handleJoinGame}
