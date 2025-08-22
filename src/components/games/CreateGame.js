@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { ArrowLeft } from 'lucide-react';
 import { LOCATIONS } from '../../constants/locations';
 import { getNextSaturday, getTodayDate, getMaxDate, isValidGameDate, formatDateWithDay, convertTo12Hour } from '../../utils/dateUtils';
 import { weatherService } from '../../services/weatherService';
@@ -6,7 +7,7 @@ import FloatingOrbs from '../ui/FloatingOrbs';
 import Button from '../ui/Button';
 import { useMouseTracking } from '../../hooks/useMouseTracking';
 
-const CreateGame = ({ onBack, onCreateGame }) => {
+const CreateGame = ({ onBack, onCreateGame, hideHeader }) => {
   const mousePosition = useMouseTracking();
   const [newGame, setNewGame] = useState({
     location: '',
@@ -90,23 +91,25 @@ const CreateGame = ({ onBack, onCreateGame }) => {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white relative overflow-hidden">
-      <FloatingOrbs mousePosition={mousePosition} />
+    <div className={hideHeader ? "" : "min-h-screen bg-black text-white relative overflow-hidden"}>
+      {!hideHeader && <FloatingOrbs mousePosition={mousePosition} />}
       
       <div className="relative z-10">
-        <div className="max-w-md mx-auto px-8 py-16">
+        <div className={hideHeader ? "" : "max-w-md mx-auto px-8 py-16"}>
         {/* Header */}
-        <div className="flex items-center justify-between mb-20">
-          <div>
-            <h1 className="text-xl font-light tracking-wide text-white mb-1">
-              Burlington Ballers
-            </h1>
-            <p className="text-xs text-gray-400">Create New Game</p>
+        {!hideHeader && (
+          <div className="flex items-center justify-between mb-20">
+            <div>
+              <h1 className="text-xl font-light tracking-wide text-white mb-1">
+                Burlington Ballers
+              </h1>
+              <p className="text-xs text-gray-400">Create New Game</p>
+            </div>
+            <Button onClick={onBack} variant="secondary" size="sm">
+              <ArrowLeft className="w-4 h-4" />
+            </Button>
           </div>
-          <Button onClick={onBack} variant="secondary" size="sm">
-            Back
-          </Button>
-        </div>
+        )}
 
         <div className="space-y-12">
           <select

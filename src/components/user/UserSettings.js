@@ -4,7 +4,7 @@ import FloatingOrbs from '../ui/FloatingOrbs';
 import Button from '../ui/Button';
 import { useMouseTracking } from '../../hooks/useMouseTracking';
 
-const UserSettings = ({ user, onBack, onUpdateSettings }) => {
+const UserSettings = ({ user, onBack, onUpdateSettings, hideHeader }) => {
   const mousePosition = useMouseTracking();
   const [username, setUsername] = useState(user?.username || user?.name || '');
   const [emailPreferences, setEmailPreferences] = useState({
@@ -52,23 +52,25 @@ const UserSettings = ({ user, onBack, onUpdateSettings }) => {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white relative overflow-hidden">
-      <FloatingOrbs mousePosition={mousePosition} />
+    <div className={hideHeader ? "" : "min-h-screen bg-black text-white relative overflow-hidden"}>
+      {!hideHeader && <FloatingOrbs mousePosition={mousePosition} />}
       
       <div className="relative z-10">
-        <div className="max-w-md mx-auto px-8 py-16">
+        <div className={hideHeader ? "" : "max-w-md mx-auto px-8 py-16"}>
           {/* Header */}
-          <div className="flex items-center justify-between mb-20">
-            <div>
-              <h1 className="text-xl font-light tracking-wide text-white mb-1">
-                Settings
-              </h1>
-              <p className="text-xs text-gray-400">{user?.email}</p>
+          {!hideHeader && (
+            <div className="flex items-center justify-between mb-20">
+              <div>
+                <h1 className="text-xl font-light tracking-wide text-white mb-1">
+                  Settings
+                </h1>
+                <p className="text-xs text-gray-400">{user?.email}</p>
+              </div>
+              <Button onClick={onBack} variant="secondary" size="sm">
+                <ArrowLeft className="w-4 h-4" />
+              </Button>
             </div>
-            <Button onClick={onBack} variant="secondary" size="sm">
-              <ArrowLeft className="w-4 h-4" />
-            </Button>
-          </div>
+          )}
 
           <div className="space-y-8">
             {/* Profile Section */}

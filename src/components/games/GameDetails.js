@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, Calendar, Users } from 'lucide-react';
+import { MapPin, Calendar, Users, ArrowLeft } from 'lucide-react';
 import { convertTo24Hour, convertTo12Hour, formatDateWithDay } from '../../utils/dateUtils';
 import { LOCATIONS } from '../../constants/locations';
 import FloatingOrbs from '../ui/FloatingOrbs';
@@ -8,7 +8,7 @@ import AnimatedCounter from '../ui/AnimatedCounter';
 import AnimatedWeatherIcon from '../ui/AnimatedWeatherIcon';
 import { useMouseTracking } from '../../hooks/useMouseTracking';
 
-const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGame, onDeleteGame, onEditLocation, onEditTime }) => {
+const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGame, onDeleteGame, onEditLocation, onEditTime, hideHeader }) => {
   const mousePosition = useMouseTracking();
   const [arrivalTime, setArrivalTime] = useState('');
   const [isEditingGame, setIsEditingGame] = useState(false);
@@ -123,25 +123,32 @@ const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGam
   };
 
   return (
-    <div className="min-h-screen bg-black text-white relative overflow-hidden">
-      <FloatingOrbs mousePosition={mousePosition} />
+    <div className={hideHeader ? "" : "min-h-screen bg-black text-white relative overflow-hidden"}>
+      {!hideHeader && <FloatingOrbs mousePosition={mousePosition} />}
       
       <div className="relative z-10">
-        <div className="max-w-md mx-auto px-8 py-16">
+        <div className={hideHeader ? "" : "max-w-md mx-auto px-8 py-16"}>
         {/* Header */}
-        <div className="flex items-center justify-between mb-20">
-          <div>
-            <h1 className="text-xl font-light tracking-wide text-white mb-1">
-              Burlington Ballers
-            </h1>
-            <p className="text-xs text-gray-400">{user?.name}</p>
+        {!hideHeader && (
+          <div className="flex items-center justify-between mb-20">
+            <div>
+              <h1 className="text-xl font-light tracking-wide text-white mb-1">
+                Burlington Ballers
+              </h1>
+              <p className="text-xs text-gray-400">{user?.name}</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <Button onClick={onBack} variant="secondary" size="sm">
+                <ArrowLeft className="w-4 h-4" />
+              </Button>
+              {isOrganizer && (
+                <Button onClick={handleEditGame} size="sm">
+                  Edit
+                </Button>
+              )}
+            </div>
           </div>
-          {isOrganizer && (
-            <Button onClick={handleEditGame} size="sm">
-              Edit
-            </Button>
-          )}
-        </div>
+        )}
 
         {/* Event header */}
         <div className="text-center mb-16">
@@ -412,15 +419,6 @@ const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGam
           </div>
         ) : null}
         
-        {/* Back button at bottom */}
-        <div className="mt-16 text-center">
-          <Button 
-            onClick={onBack}
-            variant="secondary"
-          >
-            ← Back to Games
-          </Button>
-        </div>
         
         </div>
       </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Sun, Cloud } from 'lucide-react';
+import { Sun, Cloud, ArrowLeft, Settings } from 'lucide-react';
 import LoginScreen from './components/auth/LoginScreen';
 import UsernameSetup from './components/auth/UsernameSetup';
 import GameDashboard from './components/games/GameDashboard';
@@ -9,16 +9,21 @@ import UserSettings from './components/user/UserSettings';
 import { ToastProvider, useToast } from './components/ui/Toast';
 import { convertTo12Hour } from './utils/dateUtils';
 import { useAuth } from './hooks/useAuth';
+import { useMouseTracking } from './hooks/useMouseTracking';
+import FloatingOrbs from './components/ui/FloatingOrbs';
+import Button from './components/ui/Button';
 import { gameService } from './services/gameService';
 import './App.css';
 
 const BasketballSchedulerContent = () => {
   const { user, loading: authLoading, setUsername } = useAuth();
+  const mousePosition = useMouseTracking();
   const toast = useToast();
   const [currentView, setCurrentView] = useState('games'); // 'games', 'create', 'settings' 
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [transitionType, setTransitionType] = useState('fade'); // 'fade', 'slideLeft', 'slideRight', 'slideUp', 'slideDown', 'flip', 'zoom'
   
   const [games, setGames] = useState([]);
 
@@ -382,24 +387,34 @@ const BasketballSchedulerContent = () => {
     }
   };
 
-  // Enhanced transition helpers
+  // Enhanced transition helpers with unique animations
   const transitionToGame = (game) => {
+    setTransitionType('slideUp'); // Games slide up to reveal details
     setIsTransitioning(true);
     setTimeout(() => {
       setSelectedEvent(game);
-      setTimeout(() => setIsTransitioning(false), 50);
-    }, 300);
+      setTimeout(() => setIsTransitioning(false), 100);
+    }, 400);
   };
 
   const transitionToView = (view) => {
+    // Different transitions for different views
+    if (view === 'create') {
+      setTransitionType('slideLeft'); // Create slides in from right
+    } else if (view === 'settings') {
+      setTransitionType('slideLeft'); // Settings slides in from right too
+    } else {
+      setTransitionType('slideRight'); // Back to games slides in from left
+    }
     setIsTransitioning(true);
     setTimeout(() => {
       setCurrentView(view);
-      setTimeout(() => setIsTransitioning(false), 50);
-    }, 300);
+      setTimeout(() => setIsTransitioning(false), 100);
+    }, 400);
   };
 
   const transitionBack = async () => {
+    setTransitionType('slideDown'); // Back from details slides down
     setIsTransitioning(true);
     setTimeout(async () => {
       setSelectedEvent(null);
@@ -411,8 +426,8 @@ const BasketballSchedulerContent = () => {
       } catch (error) {
         console.error('Error refreshing games:', error);
       }
-      setTimeout(() => setIsTransitioning(false), 50);
-    }, 300);
+      setTimeout(() => setIsTransitioning(false), 100);
+    }, 400);
   };
 
   // Temporary debug function to manually update RSVPs - you can call this from console
@@ -495,6 +510,7 @@ const BasketballSchedulerContent = () => {
         <CreateGame 
           onBack={() => transitionToView('games')}
           onCreateGame={handleCreateGame}
+          hideHeader={true}
         />
       );
     }
@@ -505,6 +521,7 @@ const BasketballSchedulerContent = () => {
           user={user}
           onBack={() => transitionToView('games')}
           onUpdateSettings={handleUpdateUserSettings}
+          hideHeader={true}
         />
       );
     }
@@ -521,6 +538,7 @@ const BasketballSchedulerContent = () => {
           onDeleteGame={handleDeleteGame}
           onEditLocation={handleEditGameLocation}
           onEditTime={handleEditGameTime}
+          hideHeader={true}
         />
       );
     }
@@ -535,17 +553,135 @@ const BasketballSchedulerContent = () => {
         onJoinGame={handleAttendGame}
         onDeclineGame={handleDeclineGame}
         onOpenSettings={() => transitionToView('settings')}
+        hideHeader={true}
       />
     );
   };
 
+  // Get transition classes based on type
+  const getTransitionClasses = () => {
+    const baseClasses = "transition-all duration-500 ease-out";
+    
+    if (!isTransitioning) {
+      return `${baseClasses} opacity-100 transform scale-100 translate-x-0 translate-y-0 rotate-0`;
+    }
+
+    switch (transitionType) {
+      case 'slideLeft':
+        return `${baseClasses} opacity-0 transform translate-x-8 scale-95`;
+      case 'slideRight':
+        return `${baseClasses} opacity-0 transform -translate-x-8 scale-95`;
+      case 'slideUp':
+        return `${baseClasses} opacity-0 transform translate-y-8 scale-95`;
+      case 'slideDown':
+        return `${baseClasses} opacity-0 transform -translate-y-8 scale-95`;
+      case 'flip':
+        return `${baseClasses} opacity-0 transform scale-90 rotate-12`;
+      case 'zoom':
+        return `${baseClasses} opacity-0 transform scale-75`;
+      case 'fade':
+      default:
+        return `${baseClasses} opacity-0 transform scale-95 translate-y-2`;
+    }
+  };
+
+  // Get header content based on current view
+  const getHeaderContent = () => {
+    if (currentView === 'create') {
+      return {
+        title: 'Burlington Ballers',
+        subtitle: user?.name,
+        rightContent: (
+          <Button onClick={() => transitionToView('games')} variant="secondary" size="sm">
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
+        )
+      };
+    } else if (currentView === 'settings') {
+      return {
+        title: 'Burlington Ballers',
+        subtitle: user?.name,
+        rightContent: (
+          <Button onClick={() => transitionToView('games')} variant="secondary" size="sm">
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
+        )
+      };
+    } else if (selectedEvent) {
+      return {
+        title: 'Burlington Ballers',
+        subtitle: user?.name,
+        rightContent: (
+          <div className="flex items-center gap-3">
+            <Button onClick={() => transitionBack()} variant="secondary" size="sm">
+              <ArrowLeft className="w-4 h-4" />
+            </Button>
+            {selectedEvent?.organizerUid === user?.uid && (
+              <Button onClick={() => {/* This will need to be passed down or handled differently */}} size="sm">
+                Edit
+              </Button>
+            )}
+          </div>
+        )
+      };
+    } else {
+      return {
+        title: 'Burlington Ballers',
+        subtitle: user?.name,
+        rightContent: (
+          <div className="flex items-center gap-3">
+            <Button onClick={() => transitionToView('settings')} variant="ghost" size="sm">
+              <Settings className="w-4 h-4" />
+            </Button>
+            <Button onClick={() => transitionToView('create')} size="sm">
+              New Game
+            </Button>
+          </div>
+        )
+      };
+    }
+  };
+
+  const headerContent = getHeaderContent();
+
   return (
-    <div className={`transition-all duration-300 ease-in-out ${
-      isTransitioning 
-        ? 'opacity-0 transform scale-95 translate-y-2' 
-        : 'opacity-100 transform scale-100 translate-y-0'
-    }`}>
-      {mainContent()}
+    <div className="min-h-screen bg-black text-white relative overflow-hidden">
+      <FloatingOrbs mousePosition={mousePosition} />
+      
+      <div className="relative z-10">
+        <div className="max-w-md mx-auto px-8">
+          {/* Fixed Header */}
+          <div className="sticky top-0 bg-black/80 backdrop-blur-sm z-30 py-16">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-xl font-light tracking-wide text-white mb-1">
+                  {headerContent.title}
+                </h1>
+                <p className="text-xs text-gray-400">{headerContent.subtitle}</p>
+              </div>
+              <div className="relative">
+                <div className={`transition-all duration-500 ease-in-out transform ${
+                  isTransitioning 
+                    ? 'opacity-0 scale-95 blur-sm' 
+                    : 'opacity-100 scale-100 blur-0'
+                }`}>
+                  {headerContent.rightContent}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Background overlay with blur effect during transitions */}
+          {isTransitioning && (
+            <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-20 transition-all duration-500" />
+          )}
+          
+          {/* Transitioning content */}
+          <div className={`relative z-10 ${getTransitionClasses()}`}>
+            {mainContent()}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

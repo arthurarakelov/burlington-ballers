@@ -7,7 +7,7 @@ import Button from '../ui/Button';
 import { GameCardSkeleton } from '../ui/SkeletonLoader';
 import { useMouseTracking } from '../../hooks/useMouseTracking';
 
-const GameDashboard = ({ user, games, loading, onCreateGame, onSelectGame, onJoinGame, onDeclineGame, onOpenSettings }) => {
+const GameDashboard = ({ user, games, loading, onCreateGame, onSelectGame, onJoinGame, onDeclineGame, onOpenSettings, hideHeader }) => {
   const mousePosition = useMouseTracking();
   
   // If no games and not loading, show empty state
@@ -16,28 +16,30 @@ const GameDashboard = ({ user, games, loading, onCreateGame, onSelectGame, onJoi
   }
   
   return (
-    <div className="min-h-screen bg-black text-white relative overflow-hidden">
-      <FloatingOrbs mousePosition={mousePosition} />
+    <div className={hideHeader ? "" : "min-h-screen bg-black text-white relative overflow-hidden"}>
+      {!hideHeader && <FloatingOrbs mousePosition={mousePosition} />}
       
       <div className="relative z-10">
-        <div className="max-w-md mx-auto px-8 py-16">
+        <div className={hideHeader ? "" : "max-w-md mx-auto px-8 py-16"}>
           {/* Header */}
-          <div className="flex items-center justify-between mb-20">
-            <div>
-              <h1 className="text-xl font-light tracking-wide text-white mb-1">
-                Burlington Ballers
-              </h1>
-              <p className="text-xs text-gray-400">{user?.name}</p>
+          {!hideHeader && (
+            <div className="flex items-center justify-between mb-20">
+              <div>
+                <h1 className="text-xl font-light tracking-wide text-white mb-1">
+                  Burlington Ballers
+                </h1>
+                <p className="text-xs text-gray-400">{user?.name}</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <Button onClick={onOpenSettings} variant="ghost" size="sm">
+                  <Settings className="w-4 h-4" />
+                </Button>
+                <Button onClick={onCreateGame} size="sm">
+                  New Game
+                </Button>
+              </div>
             </div>
-            <div className="flex items-center gap-3">
-              <Button onClick={onOpenSettings} variant="ghost" size="sm">
-                <Settings className="w-4 h-4" />
-              </Button>
-              <Button onClick={onCreateGame} size="sm">
-                New Game
-              </Button>
-            </div>
-          </div>
+          )}
 
           {/* Games */}
           {loading ? (
