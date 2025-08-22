@@ -1,0 +1,38 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Users can only read/write their own user document
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Games: Anyone authenticated can read, only organizers can modify
+    match /games/{gameId} {
+      // Anyone signed in can read games
+      allow read: if request.auth != null;
+      
+      // Only authenticated users can create games (and set themselves as organizer)
+      allow create: if request.auth != null 
+        && request.auth.uid == request.resource.data.organizerUid;
+      
+      // Only the game organizer can update/delete their games
+      allow update, delete: if request.auth != null 
+        && request.auth.uid == resource.data.organizerUid;
+    }
+    
+    // RSVPs: Users can manage their own RSVPs, read others for game details
+    match /rsvps/{rsvpId} {
+      // Anyone signed in can read RSVPs (needed to show attendee lists)
+      allow read: if request.auth != null;
+      
+      // Users can only create RSVPs for themselves
+      allow create: if request.auth != null 
+        && request.auth.uid == request.resource.data.userUid;
+      
+      // Users can only update/delete their own RSVPs
+      allow update, delete: if request.auth != null 
+        && request.auth.uid == resource.data.userUid;
+    }
+  }
+}

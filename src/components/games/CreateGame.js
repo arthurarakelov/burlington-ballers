@@ -3,6 +3,7 @@ import { LOCATIONS } from '../../constants/locations';
 import { getNextSaturday, getTodayDate, getMaxDate, isValidGameDate, formatDateWithDay, convertTo12Hour } from '../../utils/dateUtils';
 import { weatherService } from '../../services/weatherService';
 import FloatingOrbs from '../ui/FloatingOrbs';
+import Button from '../ui/Button';
 import { useMouseTracking } from '../../hooks/useMouseTracking';
 
 const CreateGame = ({ onBack, onCreateGame }) => {
@@ -102,12 +103,9 @@ const CreateGame = ({ onBack, onCreateGame }) => {
             </h1>
             <p className="text-xs text-gray-400">Create New Game</p>
           </div>
-          <button 
-            onClick={onBack}
-            className="px-4 py-2 bg-transparent border border-gray-600 hover:border-gray-500 hover:bg-gray-500/10 text-gray-300 hover:text-white font-medium text-sm rounded-lg transition-colors duration-200"
-          >
+          <Button onClick={onBack} variant="secondary" size="sm">
             Back
-          </button>
+          </Button>
         </div>
 
         <div className="space-y-12">
@@ -147,13 +145,15 @@ const CreateGame = ({ onBack, onCreateGame }) => {
             </div>
           )}
           
-          <button 
+          <Button 
             onClick={handleCreateGame}
-            disabled={!newGame.location || !newGame.date || !newGame.time || creating || dateError}
-            className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-medium text-lg rounded-lg transition-colors duration-200 mt-16 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={!newGame.location || !newGame.date || !newGame.time || dateError}
+            loading={creating}
+            size="lg"
+            className="w-full mt-16"
           >
-            {creating ? 'Creating...' : 'Create Game'}
-          </button>
+            Create Game
+          </Button>
           
           {/* Debug info */}
           <div className="mt-8 text-xs text-gray-600">

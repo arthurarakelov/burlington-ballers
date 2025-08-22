@@ -32,6 +32,11 @@ export const useAuth = () => {
               email: firebaseUser.email,
               photo: firebaseUser.photoURL,
               username: userData.username,
+              emailPreferences: userData.emailPreferences || {
+                rsvpReminders: false,
+                attendanceReminders: false,
+                gameChangeNotifications: false
+              },
               needsUsernameSetup: !userData.username // Flag if username setup is needed
             });
             

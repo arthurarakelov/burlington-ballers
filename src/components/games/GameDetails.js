@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, Calendar, Users, Sun, Cloud, CloudRain, CloudDrizzle, CloudSnow, CloudLightning } from 'lucide-react';
+import { MapPin, Calendar, Users } from 'lucide-react';
 import { convertTo24Hour, convertTo12Hour, formatDateWithDay } from '../../utils/dateUtils';
 import { LOCATIONS } from '../../constants/locations';
 import FloatingOrbs from '../ui/FloatingOrbs';
+import Button from '../ui/Button';
+import AnimatedCounter from '../ui/AnimatedCounter';
+import AnimatedWeatherIcon from '../ui/AnimatedWeatherIcon';
 import { useMouseTracking } from '../../hooks/useMouseTracking';
 
 const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGame, onDeleteGame, onEditLocation, onEditTime }) => {
@@ -11,6 +14,13 @@ const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGam
   const [isEditingGame, setIsEditingGame] = useState(false);
   const [editLocation, setEditLocation] = useState('');
   const [editTime, setEditTime] = useState('');
+  const [loadingStates, setLoadingStates] = useState({
+    joining: false,
+    leaving: false,
+    declining: false,
+    deleting: false,
+    saving: false
+  });
 
   const attendees = (game.attendees || []).sort((a, b) => {
     const timeA = new Date(`1970/01/01 ${a.arrivalTime}`);
@@ -23,47 +33,53 @@ const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGam
   const declinedCount = game.declined?.length || 0;
   const isOrganizer = game.organizerUid === user?.uid;
 
-  
-  // Get the correct weather icon component
-  const getWeatherIcon = (iconName) => {
-    const icons = {
-      Sun: Sun,
-      Cloud: Cloud,
-      CloudRain: CloudRain,
-      CloudDrizzle: CloudDrizzle,
-      CloudSnow: CloudSnow,
-      CloudLightning: CloudLightning
-    };
-    return icons[iconName] || Sun;
-  };
-  
-  const WeatherIcon = getWeatherIcon(game.weather.icon);
-
   useEffect(() => {
     if (game) {
       setArrivalTime(convertTo24Hour(game.time));
     }
   }, [game.id, game.time]);
 
-  const handleJoinGame = () => {
-    if (arrivalTime) {
-      onJoinGame(game.id, arrivalTime);
+  const handleJoinGame = async () => {
+    if (arrivalTime && !loadingStates.joining) {
+      setLoadingStates(prev => ({ ...prev, joining: true }));
+      try {
+        await onJoinGame(game.id, arrivalTime);
+      } finally {
+        setLoadingStates(prev => ({ ...prev, joining: false }));
+      }
     }
   };
 
-  const handleLeaveGame = () => {
-    onLeaveGame(game.id);
-  };
-
-  const handleDeclineGame = () => {
-    if (onDeclineGame) {
-      onDeclineGame(game.id);
+  const handleLeaveGame = async () => {
+    if (!loadingStates.leaving) {
+      setLoadingStates(prev => ({ ...prev, leaving: true }));
+      try {
+        await onLeaveGame(game.id);
+      } finally {
+        setLoadingStates(prev => ({ ...prev, leaving: false }));
+      }
     }
   };
 
-  const handleDeleteGame = () => {
-    if (onDeleteGame) {
-      onDeleteGame(game.id);
+  const handleDeclineGame = async () => {
+    if (onDeclineGame && !loadingStates.declining) {
+      setLoadingStates(prev => ({ ...prev, declining: true }));
+      try {
+        await onDeclineGame(game.id);
+      } finally {
+        setLoadingStates(prev => ({ ...prev, declining: false }));
+      }
+    }
+  };
+
+  const handleDeleteGame = async () => {
+    if (onDeleteGame && !loadingStates.deleting) {
+      setLoadingStates(prev => ({ ...prev, deleting: true }));
+      try {
+        await onDeleteGame(game.id);
+      } finally {
+        setLoadingStates(prev => ({ ...prev, deleting: false }));
+      }
     }
   };
 
@@ -76,8 +92,9 @@ const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGam
   };
 
   const handleSaveGame = async () => {
-    if (!editLocation || !editTime) return;
+    if (!editLocation || !editTime || loadingStates.saving) return;
     
+    setLoadingStates(prev => ({ ...prev, saving: true }));
     try {
       // Save location if changed
       const selectedLocation = LOCATIONS.find(loc => loc.value === editLocation);
@@ -94,6 +111,8 @@ const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGam
       setIsEditingGame(false);
     } catch (error) {
       console.error('Error saving game changes:', error);
+    } finally {
+      setLoadingStates(prev => ({ ...prev, saving: false }));
     }
   };
 
@@ -118,28 +137,25 @@ const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGam
             <p className="text-xs text-gray-400">{user?.name}</p>
           </div>
           {isOrganizer && (
-            <button 
-              onClick={handleEditGame}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm rounded-lg transition-colors duration-200"
-            >
+            <Button onClick={handleEditGame} size="sm">
               Edit
-            </button>
+            </Button>
           )}
         </div>
 
         {/* Event header */}
         <div className="text-center mb-16">
-          <h3 className="text-3xl font-light mb-4">{game.title}</h3>
-          <div className="space-y-2 text-gray-400 font-light">
+          <h3 className="text-4xl font-semibold mb-6 text-white leading-tight">{game.title}</h3>
+          <div className="space-y-3 text-gray-300">
             {isEditingGame ? (
-              <div className="bg-gray-900/30 backdrop-blur-sm border border-gray-800 rounded-xl p-8 space-y-8">
+              <div className="bg-gray-900/40 backdrop-blur-sm border border-gray-700 rounded-xl p-8 space-y-8">
                 <div className="text-center">
-                  <h4 className="text-sm font-light text-gray-400 mb-6">Edit Game Details</h4>
+                  <h4 className="text-lg font-medium text-gray-200 mb-6">Edit Game Details</h4>
                 </div>
                 
                 <div className="space-y-6">
                   <div>
-                    <label className="block text-xs font-light text-gray-500 mb-3 tracking-wider">LOCATION</label>
+                    <label className="block text-sm font-medium text-gray-400 mb-3 tracking-wide">Location</label>
                     <select
                       value={editLocation}
                       onChange={(e) => setEditLocation(e.target.value)}
@@ -155,7 +171,7 @@ const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGam
                   </div>
                   
                   <div>
-                    <label className="block text-xs font-light text-gray-500 mb-3 tracking-wider">TIME</label>
+                    <label className="block text-sm font-medium text-gray-400 mb-3 tracking-wide">Time</label>
                     <input
                       type="time"
                       value={editTime}
@@ -169,50 +185,54 @@ const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGam
                 
                 <div className="space-y-4">
                   <div className="flex gap-4">
-                    <button
+                    <Button
                       onClick={handleCancelEdit}
-                      className="flex-1 px-6 py-3 bg-transparent border border-gray-600 hover:border-gray-500 hover:bg-gray-500/10 text-gray-300 hover:text-white font-medium text-sm rounded-lg transition-colors duration-200"
+                      variant="secondary"
+                      className="flex-1"
                     >
                       Cancel
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       onClick={handleSaveGame}
                       disabled={!editLocation || !editTime}
-                      className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                      loading={loadingStates.saving}
+                      className="flex-1"
                     >
                       Save Changes
-                    </button>
+                    </Button>
                   </div>
                   
                   <div className="w-16 h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent mx-auto"></div>
                   
-                  <button
+                  <Button
                     onClick={handleDeleteGame}
-                    className="w-full px-6 py-3 bg-transparent border border-red-600 hover:border-red-500 hover:bg-red-500/10 text-red-400 hover:text-red-300 font-medium text-sm rounded-lg transition-colors duration-200"
+                    variant="danger"
+                    loading={loadingStates.deleting}
+                    className="w-full"
                   >
                     Delete Game
-                  </button>
+                  </Button>
                 </div>
               </div>
             ) : (
               <>
                 <div className="flex items-center justify-center gap-3">
-                  <MapPin className="w-4 h-4" />
-                  <span>{game.location}</span>
+                  <MapPin className="w-5 h-5 text-gray-400" />
+                  <span className="text-base font-medium">{game.location}</span>
                 </div>
                 <div className="flex items-center justify-center gap-3">
-                  <Calendar className="w-4 h-4" />
-                  <span>{formatDateWithDay(game.date)} • {game.time}</span>
+                  <Calendar className="w-5 h-5 text-gray-400" />
+                  <span className="text-base font-medium">{formatDateWithDay(game.date)} • {game.time}</span>
                 </div>
               </>
             )}
             <div className="flex items-center justify-center gap-3">
-              <WeatherIcon className="w-4 h-4" />
-              <span>{game.weather.temp}° {game.weather.condition}</span>
+              <AnimatedWeatherIcon iconName={game.weather.icon} className="w-5 h-5" />
+              <span className="text-base font-medium">{game.weather.temp}° {game.weather.condition}</span>
             </div>
             <div className="flex items-center justify-center gap-3">
-              <Users className="w-4 h-4" />
-              <span>Created by {game.organizerName || game.organizer}</span>
+              <Users className="w-5 h-5 text-gray-400" />
+              <span className="text-sm text-gray-400">Created by {game.organizerName || game.organizer}</span>
             </div>
           </div>
         </div>
@@ -221,23 +241,23 @@ const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGam
 
         {/* Players */}
         <div className="mb-16">
-          <h4 className="text-center text-sm font-light text-gray-500 mb-6">
-            Confirmed ({attendees.length})
+          <h4 className="text-center text-base font-semibold text-green-400 mb-8">
+            Confirmed (<AnimatedCounter value={attendees.length} className="font-bold" />)
           </h4>
-          <div className="space-y-4">
+          <div className="space-y-3">
             {attendees.map((attendee, idx) => (
-              <div key={idx} className="flex items-center justify-between py-3 border-b border-gray-900 last:border-0">
-                <div className="flex items-center gap-3">
+              <div key={idx} className="flex items-center justify-between py-4 px-4 bg-gray-900/20 rounded-lg border border-gray-800/50">
+                <div className="flex items-center gap-4">
                   {attendee.userPhoto && (
                     <img 
                       src={attendee.userPhoto} 
                       alt={attendee.userName || attendee.name} 
-                      className="w-6 h-6 rounded-full"
+                      className="w-8 h-8 rounded-full border-2 border-green-400/50"
                     />
                   )}
-                  <span className="font-light">{attendee.userName || attendee.name}</span>
+                  <span className="font-medium text-gray-200">{attendee.userName || attendee.name}</span>
                 </div>
-                <span className="text-sm text-gray-400 font-light">{attendee.arrivalTime}</span>
+                <span className="text-sm text-green-300 font-medium bg-green-900/30 px-3 py-1 rounded-full">{attendee.arrivalTime}</span>
               </div>
             ))}
           </div>
@@ -246,21 +266,21 @@ const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGam
         {/* Declined Players */}
         {declinedCount > 0 && (
           <div className="mb-16">
-            <h4 className="text-center text-sm font-light text-red-400 mb-6">
-              Can't make it ({declinedCount})
+            <h4 className="text-center text-base font-semibold text-red-400 mb-8">
+              Can't make it (<AnimatedCounter value={declinedCount} className="font-bold" />)
             </h4>
-            <div className="space-y-4">
+            <div className="space-y-3">
               {game.declined.map((declined, idx) => (
-                <div key={idx} className="flex items-center justify-between py-3 border-b border-gray-900 last:border-0">
-                  <div className="flex items-center gap-3">
+                <div key={idx} className="flex items-center justify-between py-4 px-4 bg-red-900/10 rounded-lg border border-red-900/30">
+                  <div className="flex items-center gap-4">
                     {declined.userPhoto && (
                       <img 
                         src={declined.userPhoto} 
                         alt={declined.userName} 
-                        className="w-6 h-6 rounded-full opacity-60"
+                        className="w-8 h-8 rounded-full opacity-70 border-2 border-red-400/30"
                       />
                     )}
-                    <span className="font-light text-red-400">{declined.userName}</span>
+                    <span className="font-medium text-red-300">{declined.userName}</span>
                   </div>
                 </div>
               ))}
@@ -274,7 +294,7 @@ const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGam
             <div className="w-24 h-px bg-gradient-to-r from-transparent via-orange-400 to-transparent mx-auto"></div>
             
             <div className="space-y-6">
-              <h4 className="text-center text-sm font-light text-gray-500">Arrival Time</h4>
+              <h4 className="text-center text-base font-medium text-gray-300">When will you arrive?</h4>
               <input
                 type="time"
                 value={arrivalTime}
@@ -283,20 +303,21 @@ const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGam
               />
               
               <div className="grid grid-cols-2 gap-4">
-                <button 
+                <Button 
                   onClick={handleJoinGame}
                   disabled={!arrivalTime}
-                  className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  loading={loadingStates.joining}
                 >
                   Join
-                </button>
+                </Button>
                 
-                <button 
+                <Button 
                   onClick={handleDeclineGame}
-                  className="px-6 py-3 bg-transparent border border-gray-600 hover:border-gray-500 hover:bg-gray-500/10 text-gray-300 hover:text-white font-medium text-sm rounded-lg transition-colors duration-200"
+                  variant="secondary"
+                  loading={loadingStates.declining}
                 >
                   Can't make it
-                </button>
+                </Button>
               </div>
             </div>
           </div>
@@ -306,12 +327,14 @@ const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGam
             
             <p className="text-center text-blue-400 font-medium mb-6">You're attending this game</p>
             
-            <button 
+            <Button 
               onClick={handleDeclineGame}
-              className="w-full px-6 py-3 bg-transparent border border-gray-600 hover:border-gray-500 hover:bg-gray-500/10 text-gray-300 hover:text-white font-medium text-sm rounded-lg transition-colors duration-200"
+              variant="secondary"
+              loading={loadingStates.declining}
+              className="w-full"
             >
               Can't make it anymore
-            </button>
+            </Button>
           </div>
         ) : hasDeclined ? (
           <div className="space-y-8">
@@ -328,25 +351,27 @@ const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGam
                 className="w-full bg-gray-900 border border-gray-700 focus:border-blue-400 outline-none px-4 py-3 text-lg font-light text-white rounded-lg transition-all duration-300"
               />
               
-              <button 
+              <Button 
                 onClick={handleJoinGame}
                 disabled={!arrivalTime}
-                className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-medium text-lg rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                loading={loadingStates.joining}
+                size="lg"
+                className="w-full"
               >
                 Join Game
-              </button>
+              </Button>
             </div>
           </div>
         ) : null}
         
         {/* Back button at bottom */}
         <div className="mt-16 text-center">
-          <button 
+          <Button 
             onClick={onBack}
-            className="px-6 py-3 bg-transparent border border-gray-600 hover:border-gray-500 hover:bg-gray-500/10 text-gray-300 hover:text-white font-medium text-sm rounded-lg transition-colors duration-200"
+            variant="secondary"
           >
             ← Back to Games
-          </button>
+          </Button>
         </div>
         
         </div>

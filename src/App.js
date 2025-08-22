@@ -5,14 +5,17 @@ import UsernameSetup from './components/auth/UsernameSetup';
 import GameDashboard from './components/games/GameDashboard';
 import GameDetails from './components/games/GameDetails';
 import CreateGame from './components/games/CreateGame';
+import UserSettings from './components/user/UserSettings';
+import { ToastProvider, useToast } from './components/ui/Toast';
 import { convertTo12Hour } from './utils/dateUtils';
 import { useAuth } from './hooks/useAuth';
 import { gameService } from './services/gameService';
 import './App.css';
 
-const BasketballScheduler = () => {
+const BasketballSchedulerContent = () => {
   const { user, loading: authLoading, setUsername } = useAuth();
-  const [currentView, setCurrentView] = useState('games'); 
+  const toast = useToast();
+  const [currentView, setCurrentView] = useState('games'); // 'games', 'create', 'settings' 
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -41,7 +44,7 @@ const BasketballScheduler = () => {
           setLoading(false);
           // Show empty games on error so we can see the real issue
           setGames([]);
-          alert('Firestore error: ' + error.message);
+          toast.showError('Database connection error', error.message);
         });
         
         return unsubscribe;
@@ -100,10 +103,11 @@ const BasketballScheduler = () => {
     try {
       const gameId = await gameService.createGame(gameData, user);
       console.log('Game created with ID:', gameId);
+      toast.showSuccess('Game created successfully!');
       transitionToView('games');
     } catch (error) {
       console.error('Error creating game:', error);
-      alert('Error creating game: ' + error.message);
+      toast.showError('Failed to create game', error.message);
     }
   };
 
@@ -114,15 +118,51 @@ const BasketballScheduler = () => {
       return;
     }
     
+    // Optimistic update - update UI immediately
+    const optimisticAttendee = {
+      userUid: user.uid,
+      userName: user.name,
+      userPhoto: user.photo,
+      arrivalTime: convertTo12Hour(arrivalTime)
+    };
+    
+    // Update selected event
+    setSelectedEvent(prev => ({
+      ...prev,
+      attendees: [...(prev.attendees || []), optimisticAttendee].sort((a, b) => {
+        const timeA = new Date(`1970/01/01 ${a.arrivalTime}`);
+        const timeB = new Date(`1970/01/01 ${b.arrivalTime}`);
+        return timeA - timeB;
+      }),
+      declined: prev.declined?.filter(d => d.userUid !== user.uid) || []
+    }));
+    
+    // Also update games array for dashboard
+    setGames(prev => prev.map(game => 
+      game.id === gameId ? {
+        ...game,
+        attendees: [...(game.attendees || []), optimisticAttendee].sort((a, b) => {
+          const timeA = new Date(`1970/01/01 ${a.arrivalTime}`);
+          const timeB = new Date(`1970/01/01 ${b.arrivalTime}`);
+          return timeA - timeB;
+        }),
+        declined: game.declined?.filter(d => d.userUid !== user.uid) || []
+      } : game
+    ));
+    
     try {
       console.log('Creating RSVP:', { gameId, user, status: 'attending', arrivalTime: convertTo12Hour(arrivalTime) });
       await gameService.createRSVP(gameId, user, 'attending', convertTo12Hour(arrivalTime));
       console.log('RSVP created successfully');
+      toast.showSuccess('You\'re now attending this game!');
       
-      // Manually refresh the selected game
+      // Refresh to get server state
       await refreshSelectedGame(gameId);
     } catch (error) {
       console.error('Error joining game:', error);
+      toast.showError('Failed to join game', error.message);
+      // Revert optimistic update on error
+      await refreshSelectedGame(gameId);
     }
   };
 
@@ -133,15 +173,35 @@ const BasketballScheduler = () => {
       return;
     }
     
+    // Optimistic update - remove from attendees immediately
+    setSelectedEvent(prev => ({
+      ...prev,
+      attendees: prev.attendees?.filter(a => a.userUid !== user.uid) || [],
+      declined: prev.declined?.filter(d => d.userUid !== user.uid) || []
+    }));
+    
+    // Also update games array for dashboard
+    setGames(prev => prev.map(game => 
+      game.id === gameId ? {
+        ...game,
+        attendees: game.attendees?.filter(a => a.userUid !== user.uid) || [],
+        declined: game.declined?.filter(d => d.userUid !== user.uid) || []
+      } : game
+    ));
+    
     try {
       console.log('Removing RSVP:', { gameId, userUid: user.uid });
       await gameService.removeRSVP(gameId, user.uid);
       console.log('RSVP removed successfully');
+      toast.showSuccess('You\'ve left the game');
       
-      // Manually refresh the selected game
+      // Refresh to get server state
       await refreshSelectedGame(gameId);
     } catch (error) {
       console.error('Error leaving game:', error);
+      toast.showError('Failed to leave game', error.message);
+      // Revert optimistic update on error
+      await refreshSelectedGame(gameId);
     }
   };
 
@@ -152,15 +212,41 @@ const BasketballScheduler = () => {
       return;
     }
     
+    // Optimistic update - add to declined immediately
+    const optimisticDeclined = {
+      userUid: user.uid,
+      userName: user.name,
+      userPhoto: user.photo
+    };
+    
+    setSelectedEvent(prev => ({
+      ...prev,
+      attendees: prev.attendees?.filter(a => a.userUid !== user.uid) || [],
+      declined: [...(prev.declined || []), optimisticDeclined]
+    }));
+    
+    // Also update games array for dashboard
+    setGames(prev => prev.map(game => 
+      game.id === gameId ? {
+        ...game,
+        attendees: game.attendees?.filter(a => a.userUid !== user.uid) || [],
+        declined: [...(game.declined || []), optimisticDeclined]
+      } : game
+    ));
+    
     try {
       console.log('Creating decline RSVP:', { gameId, user, status: 'declined' });
       await gameService.createRSVP(gameId, user, 'declined');
       console.log('Decline RSVP created successfully');
+      toast.showSuccess('Marked as can\'t make it');
       
-      // Manually refresh the selected game
+      // Refresh to get server state
       await refreshSelectedGame(gameId);
     } catch (error) {
       console.error('Error declining game:', error);
+      toast.showError('Failed to decline game', error.message);
+      // Revert optimistic update on error
+      await refreshSelectedGame(gameId);
     }
   };
 
@@ -179,12 +265,13 @@ const BasketballScheduler = () => {
       console.log('Deleting game:', { gameId, user });
       await gameService.deleteGame(gameId, user);
       console.log('Game deleted successfully');
+      toast.showSuccess('Game deleted successfully');
       
       // Navigate back to games list
       transitionBack();
     } catch (error) {
       console.error('Error deleting game:', error);
-      alert('Error deleting game: ' + error.message);
+      toast.showError('Failed to delete game', error.message);
     }
   };
 
@@ -204,7 +291,7 @@ const BasketballScheduler = () => {
       await refreshSelectedGame(gameId);
     } catch (error) {
       console.error('Error updating game location:', error);
-      alert('Error updating game location: ' + error.message);
+      toast.showError('Failed to update location', error.message);
     }
   };
 
@@ -224,7 +311,7 @@ const BasketballScheduler = () => {
       await refreshSelectedGame(gameId);
     } catch (error) {
       console.error('Error updating game time:', error);
-      alert('Error updating game time: ' + error.message);
+      toast.showError('Failed to update time', error.message);
     }
   };
 
@@ -246,12 +333,52 @@ const BasketballScheduler = () => {
     }
   };
 
-  const handleUsernameSet = async (username) => {
+  const handleUsernameSet = async (username, emailPreferences) => {
     try {
       await setUsername(username);
+      // Also save email preferences during signup
+      if (emailPreferences) {
+        await updateUserEmailPreferences(user.uid, emailPreferences);
+      }
     } catch (error) {
       console.error('Error setting username:', error);
       // Error is handled in the useAuth hook
+    }
+  };
+
+  const handleUpdateUserSettings = async (settings) => {
+    try {
+      // Update username if changed
+      if (settings.username !== user.username && settings.username !== user.name) {
+        await setUsername(settings.username);
+      }
+
+      // Update email preferences
+      await updateUserEmailPreferences(user.uid, settings.emailPreferences);
+      
+      toast.showSuccess('Settings updated successfully!');
+      transitionToView('games');
+    } catch (error) {
+      console.error('Error updating settings:', error);
+      toast.showError('Failed to update settings', error.message);
+      throw error;
+    }
+  };
+
+  const updateUserEmailPreferences = async (userUid, emailPreferences) => {
+    try {
+      const { doc, setDoc } = await import('firebase/firestore');
+      const { db } = await import('./services/firebase');
+      
+      const userDocRef = doc(db, 'users', userUid);
+      await setDoc(userDocRef, { 
+        emailPreferences,
+        updatedAt: new Date()
+      }, { merge: true });
+      
+    } catch (error) {
+      console.error('Error updating email preferences:', error);
+      throw error;
     }
   };
 
@@ -272,11 +399,18 @@ const BasketballScheduler = () => {
     }, 300);
   };
 
-  const transitionBack = () => {
+  const transitionBack = async () => {
     setIsTransitioning(true);
-    setTimeout(() => {
+    setTimeout(async () => {
       setSelectedEvent(null);
       setCurrentView('games');
+      // Refresh games data to ensure dashboard shows updated info
+      try {
+        const updatedGames = await gameService.getGames();
+        setGames(updatedGames);
+      } catch (error) {
+        console.error('Error refreshing games:', error);
+      }
       setTimeout(() => setIsTransitioning(false), 50);
     }, 300);
   };
@@ -365,6 +499,16 @@ const BasketballScheduler = () => {
       );
     }
 
+    if (currentView === 'settings') {
+      return (
+        <UserSettings 
+          user={user}
+          onBack={() => transitionToView('games')}
+          onUpdateSettings={handleUpdateUserSettings}
+        />
+      );
+    }
+
     if (selectedEvent) {
       return (
         <GameDetails 
@@ -388,6 +532,9 @@ const BasketballScheduler = () => {
         loading={loading}
         onCreateGame={() => transitionToView('create')}
         onSelectGame={transitionToGame}
+        onJoinGame={handleAttendGame}
+        onDeclineGame={handleDeclineGame}
+        onOpenSettings={() => transitionToView('settings')}
       />
     );
   };
@@ -400,6 +547,14 @@ const BasketballScheduler = () => {
     }`}>
       {mainContent()}
     </div>
+  );
+};
+
+const BasketballScheduler = () => {
+  return (
+    <ToastProvider>
+      <BasketballSchedulerContent />
+    </ToastProvider>
   );
 };
 
