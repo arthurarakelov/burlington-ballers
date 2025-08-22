@@ -397,6 +397,13 @@ const BasketballSchedulerContent = () => {
     }, 400);
   };
 
+  const [gameEditTrigger, setGameEditTrigger] = useState(0);
+
+  const handleEditGame = () => {
+    // Trigger edit mode by updating a counter
+    setGameEditTrigger(prev => prev + 1);
+  };
+
   const transitionToView = (view) => {
     // Different transitions for different views
     if (view === 'create') {
@@ -538,6 +545,7 @@ const BasketballSchedulerContent = () => {
           onDeleteGame={handleDeleteGame}
           onEditLocation={handleEditGameLocation}
           onEditTime={handleEditGameTime}
+          editTrigger={gameEditTrigger}
           hideHeader={true}
         />
       );
@@ -617,7 +625,7 @@ const BasketballSchedulerContent = () => {
               <ArrowLeft className="w-4 h-4" />
             </Button>
             {selectedEvent?.organizerUid === user?.uid && (
-              <Button onClick={() => {/* This will need to be passed down or handled differently */}} size="sm">
+              <Button onClick={handleEditGame} size="sm">
                 Edit
               </Button>
             )}

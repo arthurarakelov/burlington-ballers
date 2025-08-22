@@ -8,7 +8,7 @@ import AnimatedCounter from '../ui/AnimatedCounter';
 import AnimatedWeatherIcon from '../ui/AnimatedWeatherIcon';
 import { useMouseTracking } from '../../hooks/useMouseTracking';
 
-const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGame, onDeleteGame, onEditLocation, onEditTime, hideHeader }) => {
+const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGame, onDeleteGame, onEditLocation, onEditTime, editTrigger, hideHeader }) => {
   const mousePosition = useMouseTracking();
   const [arrivalTime, setArrivalTime] = useState('');
   const [isEditingGame, setIsEditingGame] = useState(false);
@@ -32,6 +32,13 @@ const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGam
   const hasDeclined = game.declined?.some(d => d.userUid === user?.uid) || false;
   const declinedCount = game.declined?.length || 0;
   const isOrganizer = game.organizerUid === user?.uid;
+
+  // Check if edit mode should be triggered from parent
+  useEffect(() => {
+    if (editTrigger > 0) {
+      handleEditGame();
+    }
+  }, [editTrigger]);
 
   useEffect(() => {
     if (game) {
