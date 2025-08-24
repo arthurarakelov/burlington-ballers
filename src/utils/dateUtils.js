@@ -69,11 +69,14 @@ export const isValidGameDate = (dateString) => {
   return selectedDate >= today && selectedDate <= maxDate;
 };
 
-// Check if a game date/time is in the past
+// Check if a game date/time is in the past (day after the game)
 export const isGameInPast = (dateString, timeString) => {
-  const gameDateTime = new Date(`${dateString} ${timeString}`);
+  const gameDate = new Date(`${dateString} ${timeString}`);
   const now = new Date();
-  return gameDateTime < now;
+  
+  // Only delete games that are more than 24 hours old
+  const oneDayAfterGame = new Date(gameDate.getTime() + (24 * 60 * 60 * 1000));
+  return now > oneDayAfterGame;
 };
 
 // Format date to include day of the week (e.g., "Saturday, 2025-08-23")

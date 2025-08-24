@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
-import { Sun, Cloud, ArrowLeft, Settings } from 'lucide-react';
+import { Sun, Cloud, ArrowLeft, Settings, MessageCircle } from 'lucide-react';
 import LoginScreen from './components/auth/LoginScreen';
 import UsernameSetup from './components/auth/UsernameSetup';
 import GameDashboard from './components/games/GameDashboard';
 import GameDetails from './components/games/GameDetails';
 import CreateGame from './components/games/CreateGame';
 import UserSettings from './components/user/UserSettings';
+import GameChat from './components/chat/GameChat';
+import WesMode from './components/ui/WesMode';
 import { ToastProvider, useToast } from './components/ui/Toast';
 import { convertTo12Hour } from './utils/dateUtils';
 import { useAuth } from './hooks/useAuth';
@@ -13,19 +15,30 @@ import { useMouseTracking } from './hooks/useMouseTracking';
 import FloatingOrbs from './components/ui/FloatingOrbs';
 import Button from './components/ui/Button';
 import { gameService } from './services/gameService';
+import { notificationScheduler } from './services/notificationScheduler';
 import './App.css';
 
 const BasketballSchedulerContent = () => {
   const { user, loading: authLoading, setUsername } = useAuth();
   const mousePosition = useMouseTracking();
   const toast = useToast();
-  const [currentView, setCurrentView] = useState('games'); // 'games', 'create', 'settings' 
+  const [currentView, setCurrentView] = useState('games'); // 'games', 'create', 'settings', 'chat' 
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [transitionType, setTransitionType] = useState('fade'); // 'fade', 'slideLeft', 'slideRight', 'slideUp', 'slideDown', 'flip', 'zoom'
   
   const [games, setGames] = useState([]);
+
+  // Start notification scheduler when app loads
+  useEffect(() => {
+    notificationScheduler.start();
+    
+    // Cleanup on unmount
+    return () => {
+      notificationScheduler.stop();
+    };
+  }, []);
 
   // Subscribe to games when user is authenticated
   useEffect(() => {
@@ -288,12 +301,17 @@ const BasketballSchedulerContent = () => {
     }
     
     try {
+      const oldGame = { ...selectedEvent };
       console.log('Updating game location:', { gameId, newLocation, newAddress, user });
       await gameService.updateGameLocation(gameId, user, newLocation, newAddress);
       console.log('Game location updated successfully');
       
       // Manually refresh the selected game
       await refreshSelectedGame(gameId);
+      
+      // Send change notifications
+      const changeDescription = `Location changed from "${oldGame.location}" to "${newLocation}"`;
+      await notificationScheduler.sendGameChangeNotifications(gameId, oldGame, selectedEvent, changeDescription);
     } catch (error) {
       console.error('Error updating game location:', error);
       toast.showError('Failed to update location', error.message);
@@ -308,12 +326,17 @@ const BasketballSchedulerContent = () => {
     }
     
     try {
+      const oldGame = { ...selectedEvent };
       console.log('Updating game time:', { gameId, newTime, user });
       await gameService.updateGameTime(gameId, user, newTime);
       console.log('Game time updated successfully');
       
       // Manually refresh the selected game
       await refreshSelectedGame(gameId);
+      
+      // Send change notifications
+      const changeDescription = `Time changed from ${oldGame.time} to ${newTime}`;
+      await notificationScheduler.sendGameChangeNotifications(gameId, oldGame, selectedEvent, changeDescription);
     } catch (error) {
       console.error('Error updating game time:', error);
       toast.showError('Failed to update time', error.message);
@@ -358,8 +381,8 @@ const BasketballSchedulerContent = () => {
         await setUsername(settings.username);
       }
 
-      // Update email preferences
-      await updateUserEmailPreferences(user.uid, settings.emailPreferences);
+      // Update email preferences and Wes Mode
+      await updateUserEmailPreferences(user.uid, settings.emailPreferences, settings.wesMode);
       
       toast.showSuccess('Settings updated successfully!');
       transitionToView('games');
@@ -370,7 +393,7 @@ const BasketballSchedulerContent = () => {
     }
   };
 
-  const updateUserEmailPreferences = async (userUid, emailPreferences) => {
+  const updateUserEmailPreferences = async (userUid, emailPreferences, wesMode) => {
     try {
       const { doc, setDoc } = await import('firebase/firestore');
       const { db } = await import('./services/firebase');
@@ -378,11 +401,12 @@ const BasketballSchedulerContent = () => {
       const userDocRef = doc(db, 'users', userUid);
       await setDoc(userDocRef, { 
         emailPreferences,
+        wesMode,
         updatedAt: new Date()
       }, { merge: true });
       
     } catch (error) {
-      console.error('Error updating email preferences:', error);
+      console.error('Error updating user preferences:', error);
       throw error;
     }
   };
@@ -393,8 +417,8 @@ const BasketballSchedulerContent = () => {
     setIsTransitioning(true);
     setTimeout(() => {
       setSelectedEvent(game);
-      setTimeout(() => setIsTransitioning(false), 100);
-    }, 400);
+      setTimeout(() => setIsTransitioning(false), 150);
+    }, 600);
   };
 
   const [gameEditTrigger, setGameEditTrigger] = useState(0);
@@ -416,8 +440,8 @@ const BasketballSchedulerContent = () => {
     setIsTransitioning(true);
     setTimeout(() => {
       setCurrentView(view);
-      setTimeout(() => setIsTransitioning(false), 100);
-    }, 400);
+      setTimeout(() => setIsTransitioning(false), 150);
+    }, 600);
   };
 
   const transitionBack = async () => {
@@ -433,8 +457,8 @@ const BasketballSchedulerContent = () => {
       } catch (error) {
         console.error('Error refreshing games:', error);
       }
-      setTimeout(() => setIsTransitioning(false), 100);
-    }, 400);
+      setTimeout(() => setIsTransitioning(false), 150);
+    }, 600);
   };
 
   // Temporary debug function to manually update RSVPs - you can call this from console
@@ -533,6 +557,15 @@ const BasketballSchedulerContent = () => {
       );
     }
 
+    if (currentView === 'chat') {
+      return (
+        <GameChat 
+          user={user}
+          hideHeader={true}
+        />
+      );
+    }
+
     if (selectedEvent) {
       return (
         <GameDetails 
@@ -566,131 +599,115 @@ const BasketballSchedulerContent = () => {
     );
   };
 
-  // Get transition classes based on type
+  // Get transition classes for rolladex-style effect
   const getTransitionClasses = () => {
-    const baseClasses = "transition-all duration-500 ease-out";
-    
     if (!isTransitioning) {
-      return `${baseClasses} opacity-100 transform scale-100 translate-x-0 translate-y-0 rotate-0`;
+      return "transition-all duration-700 ease-out opacity-100 transform-gpu";
     }
 
-    switch (transitionType) {
-      case 'slideLeft':
-        return `${baseClasses} opacity-0 transform translate-x-8 scale-95`;
-      case 'slideRight':
-        return `${baseClasses} opacity-0 transform -translate-x-8 scale-95`;
-      case 'slideUp':
-        return `${baseClasses} opacity-0 transform translate-y-8 scale-95`;
-      case 'slideDown':
-        return `${baseClasses} opacity-0 transform -translate-y-8 scale-95`;
-      case 'flip':
-        return `${baseClasses} opacity-0 transform scale-90 rotate-12`;
-      case 'zoom':
-        return `${baseClasses} opacity-0 transform scale-75`;
-      case 'fade':
-      default:
-        return `${baseClasses} opacity-0 transform scale-95 translate-y-2`;
-    }
+    // Rolladex effect - rotate around Y axis with custom CSS
+    return "transition-all duration-700 ease-out opacity-0 transform-gpu rotateY-90 translateZ-50 scale-90";
   };
 
-  // Get header content based on current view
+
+  // Get header content - consistent 3-button layout across all views
   const getHeaderContent = () => {
-    if (currentView === 'create') {
-      return {
-        title: 'Burlington Ballers',
-        subtitle: user?.name,
-        rightContent: (
-          <Button onClick={() => transitionToView('games')} variant="secondary" size="sm">
+    const isGamesView = currentView === 'games' && !selectedEvent;
+    const isGameDetails = !!selectedEvent;
+    
+    return {
+      title: 'Burlington Ballers',
+      subtitle: user?.name,
+      rightContent: (
+        <div className="flex items-center gap-3">
+          {/* Back button - always visible, disabled on main games view */}
+          <Button 
+            onClick={() => {
+              if (isGameDetails) {
+                transitionBack();
+              } else {
+                transitionToView('games');
+              }
+            }} 
+            variant="ghost" 
+            size="sm"
+            disabled={isGamesView}
+          >
             <ArrowLeft className="w-4 h-4" />
           </Button>
-        )
-      };
-    } else if (currentView === 'settings') {
-      return {
-        title: 'Burlington Ballers',
-        subtitle: user?.name,
-        rightContent: (
-          <Button onClick={() => transitionToView('games')} variant="secondary" size="sm">
-            <ArrowLeft className="w-4 h-4" />
+          
+          {/* Chat button - always visible, disabled/highlighted based on current view */}
+          <Button 
+            onClick={() => transitionToView('chat')} 
+            variant={currentView === 'chat' ? 'default' : 'ghost'} 
+            size="sm"
+            disabled={currentView === 'chat'}
+          >
+            <MessageCircle className="w-4 h-4" />
           </Button>
-        )
-      };
-    } else if (selectedEvent) {
-      return {
-        title: 'Burlington Ballers',
-        subtitle: user?.name,
-        rightContent: (
-          <div className="flex items-center gap-3">
-            <Button onClick={() => transitionBack()} variant="secondary" size="sm">
-              <ArrowLeft className="w-4 h-4" />
+          
+          {/* Settings button - always visible, disabled/highlighted based on current view */}
+          <Button 
+            onClick={() => transitionToView('settings')} 
+            variant={currentView === 'settings' ? 'default' : 'ghost'} 
+            size="sm"
+            disabled={currentView === 'settings'}
+          >
+            <Settings className="w-4 h-4" />
+          </Button>
+          
+          {/* Edit button - only show on game details when user is organizer */}
+          {isGameDetails && selectedEvent?.organizerUid === user?.uid && (
+            <Button onClick={handleEditGame} size="sm">
+              Edit
             </Button>
-            {selectedEvent?.organizerUid === user?.uid && (
-              <Button onClick={handleEditGame} size="sm">
-                Edit
-              </Button>
-            )}
-          </div>
-        )
-      };
-    } else {
-      return {
-        title: 'Burlington Ballers',
-        subtitle: user?.name,
-        rightContent: (
-          <div className="flex items-center gap-3">
-            <Button onClick={() => transitionToView('settings')} variant="ghost" size="sm">
-              <Settings className="w-4 h-4" />
-            </Button>
-            <Button onClick={() => transitionToView('create')} size="sm">
-              New Game
-            </Button>
-          </div>
-        )
-      };
-    }
+          )}
+        </div>
+      )
+    };
   };
 
   const headerContent = getHeaderContent();
 
   return (
-    <div className="min-h-screen bg-black text-white relative overflow-hidden">
-      <FloatingOrbs mousePosition={mousePosition} />
-      
-      <div className="relative z-10">
-        <div className="max-w-md mx-auto px-8">
-          {/* Fixed Header */}
-          <div className="sticky top-0 bg-black/80 backdrop-blur-sm z-30 py-16">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-xl font-light tracking-wide text-white mb-1">
-                  {headerContent.title}
-                </h1>
-                <p className="text-xs text-gray-400">{headerContent.subtitle}</p>
-              </div>
-              <div className="relative">
-                <div className={`transition-all duration-500 ease-in-out transform ${
-                  isTransitioning 
-                    ? 'opacity-0 scale-95 blur-sm' 
-                    : 'opacity-100 scale-100 blur-0'
-                }`}>
-                  {headerContent.rightContent}
+    <WesMode user={user}>
+      <div className="min-h-screen bg-black text-white relative overflow-hidden">
+        <FloatingOrbs mousePosition={mousePosition} />
+        
+        <div className="relative z-10">
+          <div className="max-w-md mx-auto px-8 pb-32">
+            {/* Fixed Header */}
+            <div className="fixed top-0 left-0 right-0 bg-black/80 backdrop-blur-sm z-30 py-6">
+              <div className="max-w-md mx-auto px-8">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h1 className="text-xl font-light tracking-wide text-white mb-1">
+                      {headerContent.title}
+                    </h1>
+                    <p className="text-xs text-gray-400">{headerContent.subtitle}</p>
+                  </div>
+                  <div className="relative">
+                    {headerContent.rightContent}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Background overlay with blur effect during transitions */}
-          {isTransitioning && (
-            <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-20 transition-all duration-500" />
-          )}
-          
-          {/* Transitioning content */}
-          <div className={`relative z-10 ${getTransitionClasses()}`}>
-            {mainContent()}
+            {/* Enhanced background overlay with dramatic blur effect during transitions */}
+            {isTransitioning && (
+              <div className="fixed inset-0 bg-black/30 backdrop-blur-md z-20 transition-all duration-700 animate-pulse" />
+            )}
+            
+            {/* Transitioning content with 3D perspective */}
+            <div className="perspective-1000 relative z-10 pt-24 mt-6">
+              <div className={getTransitionClasses()}>
+                {mainContent()}
+              </div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </WesMode>
   );
 };
 

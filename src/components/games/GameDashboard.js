@@ -67,6 +67,17 @@ const GameDashboard = ({ user, games, loading, onCreateGame, onSelectGame, onJoi
                   />
                 </div>
               ))}
+              
+              {/* New Game Button */}
+              <div className="pt-6">
+                <Button 
+                  onClick={onCreateGame}
+                  className="w-full"
+                  size="lg"
+                >
+                  New Game
+                </Button>
+              </div>
             </div>
           )}
         </div>

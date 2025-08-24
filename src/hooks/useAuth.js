@@ -6,7 +6,7 @@ import {
   signInWithRedirect,
   getRedirectResult
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, collection, query, where, getDocs, updateDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, collection, query, where, getDocs, updateDoc, onSnapshot } from 'firebase/firestore';
 import { auth, googleProvider, db } from '../services/firebase';
 
 export const useAuth = () => {
@@ -15,7 +15,9 @@ export const useAuth = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    let userDocUnsubscribe = null;
+    
+    const authUnsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         try {
           // Check if user document exists
@@ -23,21 +25,28 @@ export const useAuth = () => {
           const userDocSnap = await getDoc(userDocRef);
           
           if (userDocSnap.exists()) {
-            // User exists, get their data including custom username
-            const userData = userDocSnap.data();
-            
-            setUser({
-              uid: firebaseUser.uid,
-              name: userData.username || firebaseUser.displayName, // Use custom username if available
-              email: firebaseUser.email,
-              photo: firebaseUser.photoURL,
-              username: userData.username,
-              emailPreferences: userData.emailPreferences || {
-                rsvpReminders: false,
-                attendanceReminders: false,
-                gameChangeNotifications: false
-              },
-              needsUsernameSetup: !userData.username // Flag if username setup is needed
+            // Set up real-time listener for user document
+            userDocUnsubscribe = onSnapshot(userDocRef, (doc) => {
+              if (doc.exists()) {
+                const userData = doc.data();
+                setUser({
+                  uid: firebaseUser.uid,
+                  name: userData.username || firebaseUser.displayName,
+                  email: firebaseUser.email,
+                  photo: firebaseUser.photoURL,
+                  username: userData.username,
+                  emailPreferences: userData.emailPreferences || {
+                    rsvpReminders: false,
+                    attendanceReminders: false,
+                    gameChangeNotifications: false
+                  },
+                  wesMode: userData.wesMode || false,
+                  needsUsernameSetup: !userData.username
+                });
+              }
+            }, (error) => {
+              console.error('Error in user document listener:', error);
+              setError(error.message);
             });
             
             // Update last login
@@ -67,6 +76,11 @@ export const useAuth = () => {
           setError(err.message);
         }
       } else {
+        // Clean up user document listener when logged out
+        if (userDocUnsubscribe) {
+          userDocUnsubscribe();
+          userDocUnsubscribe = null;
+        }
         setUser(null);
       }
       setLoading(false);
@@ -79,7 +93,12 @@ export const useAuth = () => {
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      authUnsubscribe();
+      if (userDocUnsubscribe) {
+        userDocUnsubscribe();
+      }
+    };
   }, []);
 
   const signInWithGoogle = async () => {

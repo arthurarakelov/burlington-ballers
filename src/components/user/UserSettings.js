@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, Mail, Bell, Save, ArrowLeft } from 'lucide-react';
 import FloatingOrbs from '../ui/FloatingOrbs';
 import Button from '../ui/Button';
@@ -12,8 +12,23 @@ const UserSettings = ({ user, onBack, onUpdateSettings, hideHeader }) => {
     attendanceReminders: user?.emailPreferences?.attendanceReminders ?? false,
     gameChangeNotifications: user?.emailPreferences?.gameChangeNotifications ?? false
   });
+  const [wesMode, setWesMode] = useState(user?.wesMode ?? false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Update preferences when user data changes
+  useEffect(() => {
+    if (user?.emailPreferences) {
+      setEmailPreferences({
+        rsvpReminders: user.emailPreferences.rsvpReminders ?? false,
+        attendanceReminders: user.emailPreferences.attendanceReminders ?? false,
+        gameChangeNotifications: user.emailPreferences.gameChangeNotifications ?? false
+      });
+    }
+    if (user?.wesMode !== undefined) {
+      setWesMode(user.wesMode);
+    }
+  }, [user?.emailPreferences, user?.wesMode]);
 
   const handleSaveSettings = async () => {
     if (!username.trim()) {
@@ -42,7 +57,8 @@ const UserSettings = ({ user, onBack, onUpdateSettings, hideHeader }) => {
     try {
       await onUpdateSettings({
         username: username.trim(),
-        emailPreferences
+        emailPreferences,
+        wesMode
       });
     } catch (err) {
       setError('Failed to update settings. Please try again.');
@@ -72,49 +88,8 @@ const UserSettings = ({ user, onBack, onUpdateSettings, hideHeader }) => {
             </div>
           )}
 
-          <div className="space-y-8">
-            {/* Profile Section */}
-            <div className="bg-gray-900/30 backdrop-blur-sm border border-gray-800 rounded-xl p-6">
-              <div className="flex items-center gap-3 mb-6">
-                <User className="w-5 h-5 text-blue-400" />
-                <h2 className="text-lg font-medium text-white">Profile</h2>
-              </div>
-
-              <div className="space-y-4">
-                <div className="flex items-center gap-4 mb-4">
-                  {user?.photo && (
-                    <img 
-                      src={user.photo} 
-                      alt="Profile" 
-                      className="w-12 h-12 rounded-full border-2 border-gray-700"
-                    />
-                  )}
-                  <div>
-                    <p className="text-sm text-gray-400">Signed in with Google</p>
-                    <p className="text-xs text-gray-500">{user?.email}</p>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-400 mb-3">
-                    Display Name
-                  </label>
-                  <input
-                    type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    placeholder="Enter your display name"
-                    className="w-full bg-gray-800/50 border border-gray-700 focus:border-blue-400 outline-none px-4 py-3 text-white rounded-lg transition-all duration-300"
-                    maxLength={20}
-                  />
-                  <p className="text-xs text-gray-500 mt-2">
-                    This name will be visible to other players
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Email Notifications Section */}
+          <div className="space-y-8 pt-8">
+            {/* Email Notifications Section - moved to top */}
             <div className="bg-gray-900/30 backdrop-blur-sm border border-gray-800 rounded-xl p-6">
               <div className="flex items-center gap-3 mb-6">
                 <Mail className="w-5 h-5 text-green-400" />
@@ -190,6 +165,65 @@ const UserSettings = ({ user, onBack, onUpdateSettings, hideHeader }) => {
                     </p>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            {/* Profile Section - moved to bottom */}
+            <div className="bg-gray-900/30 backdrop-blur-sm border border-gray-800 rounded-xl p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <User className="w-5 h-5 text-blue-400" />
+                <h2 className="text-lg font-medium text-white">Profile</h2>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center gap-4 mb-4">
+                  {user?.photo && (
+                    <img 
+                      src={user.photo} 
+                      alt="Profile" 
+                      className="w-12 h-12 rounded-full border-2 border-gray-700"
+                    />
+                  )}
+                  <div>
+                    <p className="text-sm text-gray-400">Signed in with Google</p>
+                    <p className="text-xs text-gray-500">{user?.email}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-3">
+                    Display Name
+                  </label>
+                  <input
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="Enter your display name"
+                    className="w-full bg-gray-800/50 border border-gray-700 focus:border-blue-400 outline-none px-4 py-3 text-white rounded-lg transition-all duration-300"
+                    maxLength={20}
+                  />
+                  <p className="text-xs text-gray-500 mt-2">
+                    This name will be visible to other players
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Wes Mode Section */}
+            <div className="bg-gray-900/30 backdrop-blur-sm border border-gray-800 rounded-xl p-6">
+              <div className="flex items-center justify-between py-3">
+                <div>
+                  <h3 className="text-sm font-medium text-gray-200">Wes Mode</h3>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={wesMode}
+                    onChange={(e) => setWesMode(e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                </label>
               </div>
             </div>
 
