@@ -20,7 +20,7 @@ const GameDashboard = ({ user, games, loading, onCreateGame, onSelectGame, onJoi
       {!hideHeader && <FloatingOrbs mousePosition={mousePosition} />}
       
       <div className="relative z-10">
-        <div className={hideHeader ? "" : "max-w-md mx-auto px-8 py-16"}>
+        <div className={hideHeader ? "pt-4" : "max-w-md mx-auto px-8 py-16"}>
           {/* Header */}
           {!hideHeader && (
             <div className="flex items-center justify-between mb-20">

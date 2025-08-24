@@ -88,7 +88,7 @@ const GameChat = ({ user, hideHeader }) => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pt-4">
       {/* Message Input at Top */}
       {user && (
         <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl p-4">
