@@ -677,7 +677,7 @@ const BasketballSchedulerContent = () => {
         <div className="relative z-10">
           <div className="max-w-md mx-auto px-8 pb-32">
             {/* Fixed Header */}
-            <div className="fixed top-0 left-0 right-0 bg-black/80 backdrop-blur-sm z-30 py-6">
+            <div className="fixed top-0 left-0 right-0 bg-black/80 backdrop-blur-sm z-30 py-4">
               <div className="max-w-md mx-auto px-8">
                 <div className="flex items-center justify-between">
                   <div>
@@ -699,7 +699,7 @@ const BasketballSchedulerContent = () => {
             )}
             
             {/* Transitioning content with 3D perspective */}
-            <div className="perspective-1000 relative z-10 pt-24 mt-6">
+            <div className="perspective-1000 relative z-10 pt-28">
               <div className={getTransitionClasses()}>
                 {mainContent()}
               </div>

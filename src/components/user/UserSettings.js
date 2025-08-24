@@ -18,7 +18,7 @@ const UserSettings = ({ user, onBack, onUpdateSettings, hideHeader }) => {
 
   // Scroll to top when component mounts
   useEffect(() => {
-    window.scrollTo(0, 0);
+    window.scrollTo({ top: 0, behavior: 'instant' });
   }, []);
 
   // Update preferences when user data changes
