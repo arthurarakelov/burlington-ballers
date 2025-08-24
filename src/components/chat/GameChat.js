@@ -14,6 +14,11 @@ const GameChat = ({ user, hideHeader }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  // Scroll to top when component mounts
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
