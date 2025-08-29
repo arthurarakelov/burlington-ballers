@@ -471,11 +471,6 @@ const BasketballSchedulerContent = () => {
 
   const [gameEditTrigger, setGameEditTrigger] = useState(0);
 
-  const handleEditGame = () => {
-    // Trigger edit mode by updating a counter
-    setGameEditTrigger(prev => prev + 1);
-  };
-
   const transitionToView = (view) => {
     // Different transitions for different views
     if (view === 'create') {
@@ -669,13 +664,6 @@ const BasketballSchedulerContent = () => {
       subtitle: user?.name,
       rightContent: (
         <div className="flex items-center gap-3">
-          {/* Edit button - show first so it doesn't cause layout shift */}
-          {isGameDetails && selectedEvent?.organizerUid === user?.uid && (
-            <Button onClick={handleEditGame} size="sm" variant="secondary">
-              Edit
-            </Button>
-          )}
-          
           {/* Back button - always visible, disabled on main games view */}
           <Button 
             onClick={() => {

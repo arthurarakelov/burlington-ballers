@@ -209,16 +209,9 @@ const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGam
               </h1>
               <p className="text-xs text-gray-400">{user?.name}</p>
             </div>
-            <div className="flex items-center gap-3">
-              <Button onClick={onBack} variant="secondary" size="sm">
-                <ArrowLeft className="w-4 h-4" />
-              </Button>
-              {isOrganizer && (
-                <Button onClick={handleEditGame} size="sm">
-                  Edit
-                </Button>
-              )}
-            </div>
+            <Button onClick={onBack} variant="secondary" size="sm">
+              <ArrowLeft className="w-4 h-4" />
+            </Button>
           </div>
         )}
 
@@ -463,6 +456,12 @@ const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGam
                     Can't make it
                   </Button>
                 </div>
+                
+                {isOrganizer && (
+                  <Button onClick={handleEditGame} variant="secondary" className="w-full mt-4">
+                    Edit Game
+                  </Button>
+                )}
               </div>
             </div>
           </div>
@@ -489,6 +488,12 @@ const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGam
                 Can't make it
               </Button>
             </div>
+            
+            {isOrganizer && (
+              <Button onClick={handleEditGame} variant="secondary" className="w-full mt-4">
+                Edit Game
+              </Button>
+            )}
           </div>
         ) : hasMaybe ? (
           <div className="space-y-8">
@@ -547,6 +552,12 @@ const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGam
                 >
                   Can't make it
                 </Button>
+                
+                {isOrganizer && (
+                  <Button onClick={handleEditGame} variant="secondary" className="w-full">
+                    Edit Game
+                  </Button>
+                )}
               </div>
             </div>
           </div>
@@ -607,6 +618,12 @@ const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGam
                 >
                   Maybe
                 </Button>
+                
+                {isOrganizer && (
+                  <Button onClick={handleEditGame} variant="secondary" className="w-full">
+                    Edit Game
+                  </Button>
+                )}
               </div>
             </div>
           </div>
