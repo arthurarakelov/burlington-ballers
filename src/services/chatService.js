@@ -36,10 +36,10 @@ export const chatService = {
 
   // Subscribe to real-time chat messages
   subscribeToMessages(callback, errorCallback = null) {
-    // Get the last 50 messages, ordered by creation time
+    // Get the last 50 messages, ordered by creation time (newest first)
     const q = query(
       chatRef, 
-      orderBy('createdAt', 'asc'),
+      orderBy('createdAt', 'desc'),
       limit(50)
     );
     

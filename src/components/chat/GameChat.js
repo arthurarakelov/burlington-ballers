@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Send, MessageCircle, Clock } from 'lucide-react';
 import Button from '../ui/Button';
 import { chatService } from '../../services/chatService';
@@ -8,20 +8,11 @@ const GameChat = ({ user, hideHeader }) => {
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
-  const messagesEndRef = useRef(null);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
 
   // Scroll to top when component mounts
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, []);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
 
   // Subscribe to chat messages
   useEffect(() => {
@@ -159,7 +150,6 @@ const GameChat = ({ user, hideHeader }) => {
               </div>
             </div>
           ))}
-          <div ref={messagesEndRef} />
         </div>
       )}
     </div>
