@@ -19,6 +19,35 @@ import { isGameInPast } from '../utils/dateUtils';
 const gamesRef = collection(db, 'games');
 const rsvpsRef = collection(db, 'rsvps');
 
+// Helper function to calculate comprehensive RSVP data for a game
+export const calculateRSVPData = (game, allUsers = []) => {
+  const rsvps = game.rsvps || [];
+  
+  // Group RSVPs by status
+  const attending = rsvps.filter(rsvp => rsvp.status === 'attending');
+  const maybe = rsvps.filter(rsvp => rsvp.status === 'maybe');
+  const declined = rsvps.filter(rsvp => rsvp.status === 'declined');
+  
+  // Get UIDs of users who have responded
+  const respondedUIDs = new Set(rsvps.map(rsvp => rsvp.userUid));
+  
+  // Calculate haven't responded (this would need all users data to be accurate)
+  // For now, we'll just track known non-responders from game context
+  const haventResponded = allUsers.filter(user => !respondedUIDs.has(user.uid));
+  
+  return {
+    attending: attending.sort((a, b) => {
+      if (!a.arrivalTime || !b.arrivalTime) return 0;
+      const timeA = new Date(`1970/01/01 ${a.arrivalTime}`);
+      const timeB = new Date(`1970/01/01 ${b.arrivalTime}`);
+      return timeA - timeB;
+    }),
+    maybe: maybe.sort((a, b) => (a.userName || '').localeCompare(b.userName || '')),
+    declined: declined.sort((a, b) => (a.userName || '').localeCompare(b.userName || '')),
+    haventResponded: haventResponded.sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+  };
+};
+
 export const gameService = {
   // Create a new game
   async createGame(gameData, user) {
@@ -143,7 +172,9 @@ export const gameService = {
         
         // Get RSVPs for this game
         const rsvps = await this.getGameRSVPs(doc.id);
+        gameData.rsvps = rsvps;
         gameData.attendees = rsvps.filter(rsvp => rsvp.status === 'attending');
+        gameData.maybe = rsvps.filter(rsvp => rsvp.status === 'maybe');
         gameData.declined = rsvps.filter(rsvp => rsvp.status === 'declined');
         
         games.push(gameData);
@@ -169,7 +200,9 @@ export const gameService = {
           
           // Get RSVPs for this game
           const rsvps = await this.getGameRSVPs(doc.id);
+          gameData.rsvps = rsvps;
           gameData.attendees = rsvps.filter(rsvp => rsvp.status === 'attending');
+          gameData.maybe = rsvps.filter(rsvp => rsvp.status === 'maybe');
           gameData.declined = rsvps.filter(rsvp => rsvp.status === 'declined');
           
           games.push(gameData);
@@ -205,7 +238,7 @@ export const gameService = {
         userName: userName, // Use the latest username from DB
         userPhoto: user.photo,
         userEmail: userEmail, // Store email for potential reminders
-        status, // 'attending' or 'declined'
+        status, // 'attending', 'maybe', or 'declined'
         arrivalTime,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()

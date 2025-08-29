@@ -268,6 +268,53 @@ const BasketballSchedulerContent = () => {
     }
   };
 
+  const handleMaybeGame = async (gameId) => {
+    console.log('handleMaybeGame called:', { gameId, user });
+    if (!user) {
+      console.log('No user for maybe game');
+      return;
+    }
+    
+    // Optimistic update - add to maybe list
+    const optimisticMaybe = {
+      userUid: user.uid,
+      userName: user.name,
+      userPhoto: user.photo
+    };
+    
+    setSelectedEvent(prev => ({
+      ...prev,
+      attendees: prev.attendees?.filter(a => a.userUid !== user.uid) || [],
+      declined: prev.declined?.filter(d => d.userUid !== user.uid) || [],
+      maybe: [...(prev.maybe || []), optimisticMaybe]
+    }));
+    
+    // Also update games array for dashboard
+    setGames(prev => prev.map(game => 
+      game.id === gameId ? {
+        ...game,
+        attendees: game.attendees?.filter(a => a.userUid !== user.uid) || [],
+        declined: game.declined?.filter(d => d.userUid !== user.uid) || [],
+        maybe: [...(game.maybe || []), optimisticMaybe]
+      } : game
+    ));
+    
+    try {
+      console.log('Creating maybe RSVP:', { gameId, user, status: 'maybe' });
+      await gameService.createRSVP(gameId, user, 'maybe');
+      console.log('Maybe RSVP created successfully');
+      toast.showSuccess('Marked as maybe');
+      
+      // Refresh to get server state
+      await refreshSelectedGame(gameId);
+    } catch (error) {
+      console.error('Error marking as maybe:', error);
+      toast.showError('Failed to mark as maybe', error.message);
+      // Revert optimistic update on error
+      await refreshSelectedGame(gameId);
+    }
+  };
+
   const handleDeleteGame = async (gameId) => {
     console.log('handleDeleteGame called:', { gameId, user });
     if (!user) {
@@ -413,6 +460,7 @@ const BasketballSchedulerContent = () => {
 
   // Enhanced transition helpers with unique animations
   const transitionToGame = (game) => {
+    setGameEditTrigger(0); // Reset edit trigger when navigating to new game
     setTransitionType('slideUp'); // Games slide up to reveal details
     setIsTransitioning(true);
     setTimeout(() => {
@@ -575,6 +623,7 @@ const BasketballSchedulerContent = () => {
           onJoinGame={handleAttendGame}
           onLeaveGame={handleLeaveGame}
           onDeclineGame={handleDeclineGame}
+          onMaybeGame={handleMaybeGame}
           onDeleteGame={handleDeleteGame}
           onEditLocation={handleEditGameLocation}
           onEditTime={handleEditGameTime}

@@ -8,31 +8,85 @@ import AnimatedCounter from '../ui/AnimatedCounter';
 import AnimatedWeatherIcon from '../ui/AnimatedWeatherIcon';
 import { useMouseTracking } from '../../hooks/useMouseTracking';
 
-const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGame, onDeleteGame, onEditLocation, onEditTime, editTrigger, hideHeader }) => {
+const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGame, onMaybeGame, onDeleteGame, onEditLocation, onEditTime, editTrigger, hideHeader }) => {
   const mousePosition = useMouseTracking();
   const [arrivalTime, setArrivalTime] = useState('');
   const [isEditingGame, setIsEditingGame] = useState(false);
   const [editLocation, setEditLocation] = useState('');
   const [editTime, setEditTime] = useState('');
+  const [allUsers, setAllUsers] = useState([]);
   const [loadingStates, setLoadingStates] = useState({
     joining: false,
     leaving: false,
     declining: false,
+    maybe: false,
     deleting: false,
     saving: false
   });
 
-  const attendees = (game.attendees || []).sort((a, b) => {
+  // Calculate comprehensive RSVP data
+  const rsvps = game.rsvps || [];
+  const attending = rsvps.filter(rsvp => rsvp.status === 'attending').sort((a, b) => {
+    if (!a.arrivalTime || !b.arrivalTime) return 0;
     const timeA = new Date(`1970/01/01 ${a.arrivalTime}`);
     const timeB = new Date(`1970/01/01 ${b.arrivalTime}`);
     return timeA - timeB;
   });
+  const maybe = rsvps.filter(rsvp => rsvp.status === 'maybe').sort((a, b) => (a.userName || '').localeCompare(b.userName || ''));
+  const declined = rsvps.filter(rsvp => rsvp.status === 'declined').sort((a, b) => (a.userName || '').localeCompare(b.userName || ''));
+  
+  // Calculate users who haven't responded
+  const respondedUserIds = new Set(rsvps.map(rsvp => rsvp.userUid));
+  const haventResponded = allUsers.filter(u => !respondedUserIds.has(u.uid)).sort((a, b) => {
+    const nameA = a.username || a.googleName || a.name || '';
+    const nameB = b.username || b.googleName || b.name || '';
+    return nameA.localeCompare(nameB);
+  });
 
-  const isAttending = attendees.some(a => a.userUid === user?.uid);
-  const hasDeclined = game.declined?.some(d => d.userUid === user?.uid) || false;
-  const declinedCount = game.declined?.length || 0;
+  // Determine user's current RSVP status
+  const userRSVP = rsvps.find(rsvp => rsvp.userUid === user?.uid);
+  const userStatus = userRSVP?.status || 'no_response';
+  const isAttending = userStatus === 'attending';
+  const hasMaybe = userStatus === 'maybe';
+  const hasDeclined = userStatus === 'declined';
+  const hasntResponded = userStatus === 'no_response';
+  
   const isOrganizer = game.organizerUid === user?.uid;
 
+  // For backward compatibility, also check old structure
+  const legacyAttendees = game.attendees || [];
+  const legacyDeclined = game.declined || [];
+  const allAttending = [...attending, ...legacyAttendees].filter((item, index, self) => 
+    index === self.findIndex(t => t.userUid === item.userUid)
+  );
+  const allDeclined = [...declined, ...legacyDeclined].filter((item, index, self) => 
+    index === self.findIndex(t => t.userUid === item.userUid)
+  );
+
+  // Load all users to calculate who hasn't responded
+  useEffect(() => {
+    const loadUsers = async () => {
+      try {
+        const { collection, getDocs } = await import('firebase/firestore');
+        const { db } = await import('../../services/firebase');
+        
+        const usersRef = collection(db, 'users');
+        const usersSnapshot = await getDocs(usersRef);
+        
+        const users = usersSnapshot.docs.map(doc => ({
+          uid: doc.id,
+          ...doc.data()
+        }));
+        
+        setAllUsers(users);
+      } catch (error) {
+        console.error('Error loading users:', error);
+      }
+    };
+    
+    loadUsers();
+  }, []);
+  
   // Check if edit mode should be triggered from parent
   useEffect(() => {
     if (editTrigger > 0) {
@@ -75,6 +129,17 @@ const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGam
         await onDeclineGame(game.id);
       } finally {
         setLoadingStates(prev => ({ ...prev, declining: false }));
+      }
+    }
+  };
+
+  const handleMaybeGame = async () => {
+    if (onMaybeGame && !loadingStates.maybe) {
+      setLoadingStates(prev => ({ ...prev, maybe: true }));
+      try {
+        await onMaybeGame(game.id);
+      } finally {
+        setLoadingStates(prev => ({ ...prev, maybe: false }));
       }
     }
   };
@@ -253,57 +318,88 @@ const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGam
 
         <div className="w-24 h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent mx-auto mb-12"></div>
 
-        {/* Players */}
-        <div className="mb-16">
-          <h4 className="text-center text-base font-semibold text-green-400 mb-8">
-            Confirmed (<AnimatedCounter value={attendees.length} className="font-bold" />)
-          </h4>
-          <div className="space-y-3">
-            {attendees.map((attendee, idx) => (
-              <div key={idx} className="flex items-center justify-between py-4 px-4 bg-gray-900/20 rounded-lg border border-gray-800/50">
-                <div className="flex items-center gap-4">
-                  {attendee.userPhoto && (
-                    <img 
-                      src={attendee.userPhoto} 
-                      alt={attendee.userName || attendee.name} 
-                      className="w-8 h-8 rounded-full border-2 border-green-400/50"
-                    />
-                  )}
-                  <span className="font-medium text-gray-200">{attendee.userName || attendee.name}</span>
-                </div>
-                <span className="text-sm text-green-300 font-medium bg-green-900/30 px-3 py-1 rounded-full">{attendee.arrivalTime}</span>
+        {/* RSVP Sections */}
+        <div className="space-y-12 mb-16">
+          {/* Attending */}
+          {attending.length > 0 && (
+            <div>
+              <h4 className="text-center text-base font-semibold text-green-400 mb-8">
+                ✅ Attending (<AnimatedCounter value={attending.length} className="font-bold" />)
+              </h4>
+              <div className="space-y-3">
+                {attending.map((attendee, idx) => (
+                  <div key={idx} className="flex items-center justify-between py-4 px-4 bg-gray-900/20 rounded-lg border border-gray-800/50">
+                    <div className="flex items-center gap-4">
+                      {attendee.userPhoto && (
+                        <img 
+                          src={attendee.userPhoto} 
+                          alt={attendee.userName || attendee.name} 
+                          className="w-8 h-8 rounded-full border-2 border-green-400/50"
+                        />
+                      )}
+                      <span className="font-medium text-gray-200">{attendee.userName || attendee.name}</span>
+                    </div>
+                    <span className="text-sm text-green-300 font-medium bg-green-900/30 px-3 py-1 rounded-full">{attendee.arrivalTime}</span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </div>
+          )}
+
+          {/* Maybe */}
+          {maybe.length > 0 && (
+            <div>
+              <h4 className="text-center text-base font-semibold text-yellow-400 mb-8">
+                🤔 Maybe (<AnimatedCounter value={maybe.length} className="font-bold" />)
+              </h4>
+              <div className="space-y-3">
+                {maybe.map((maybeUser, idx) => (
+                  <div key={idx} className="flex items-center justify-between py-4 px-4 bg-yellow-900/10 rounded-lg border border-yellow-900/30">
+                    <div className="flex items-center gap-4">
+                      {maybeUser.userPhoto && (
+                        <img 
+                          src={maybeUser.userPhoto} 
+                          alt={maybeUser.userName} 
+                          className="w-8 h-8 rounded-full border-2 border-yellow-400/50"
+                        />
+                      )}
+                      <span className="font-medium text-yellow-200">{maybeUser.userName}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Declined */}
+          {declined.length > 0 && (
+            <div>
+              <h4 className="text-center text-base font-semibold text-red-400 mb-8">
+                ❌ Can't Make It (<AnimatedCounter value={declined.length} className="font-bold" />)
+              </h4>
+              <div className="space-y-3">
+                {declined.map((declinedUser, idx) => (
+                  <div key={idx} className="flex items-center justify-between py-4 px-4 bg-red-900/10 rounded-lg border border-red-900/30">
+                    <div className="flex items-center gap-4">
+                      {declinedUser.userPhoto && (
+                        <img 
+                          src={declinedUser.userPhoto} 
+                          alt={declinedUser.userName} 
+                          className="w-8 h-8 rounded-full opacity-70 border-2 border-red-400/30"
+                        />
+                      )}
+                      <span className="font-medium text-red-300">{declinedUser.userName}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
         </div>
 
-        {/* Declined Players */}
-        {declinedCount > 0 && (
-          <div className="mb-16">
-            <h4 className="text-center text-base font-semibold text-red-400 mb-8">
-              Can't make it (<AnimatedCounter value={declinedCount} className="font-bold" />)
-            </h4>
-            <div className="space-y-3">
-              {game.declined.map((declined, idx) => (
-                <div key={idx} className="flex items-center justify-between py-4 px-4 bg-red-900/10 rounded-lg border border-red-900/30">
-                  <div className="flex items-center gap-4">
-                    {declined.userPhoto && (
-                      <img 
-                        src={declined.userPhoto} 
-                        alt={declined.userName} 
-                        className="w-8 h-8 rounded-full opacity-70 border-2 border-red-400/30"
-                      />
-                    )}
-                    <span className="font-medium text-red-300">{declined.userName}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* RSVP Actions */}
-        {!isAttending && !hasDeclined ? (
+        {hasntResponded ? (
           <div className="space-y-8">
             <div className="w-24 h-px bg-gradient-to-r from-transparent via-orange-400 to-transparent mx-auto"></div>
             
@@ -340,45 +436,125 @@ const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGam
                 </select>
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-3">
                 <Button 
                   onClick={handleJoinGame}
                   disabled={!arrivalTime}
                   loading={loadingStates.joining}
+                  className="w-full"
                 >
-                  Join
+                  Join Game
+                </Button>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <Button 
+                    onClick={handleMaybeGame}
+                    variant="secondary"
+                    loading={loadingStates.maybe}
+                  >
+                    Maybe
+                  </Button>
+                  
+                  <Button 
+                    onClick={handleDeclineGame}
+                    variant="secondary"
+                    loading={loadingStates.declining}
+                  >
+                    Can't make it
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : isAttending ? (
+          <div className="space-y-8">
+            <div className="w-24 h-px bg-gradient-to-r from-transparent via-green-400 to-transparent mx-auto"></div>
+            
+            <p className="text-center text-green-400 font-medium mb-6">✅ You're attending this game</p>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <Button 
+                onClick={handleMaybeGame}
+                variant="secondary"
+                loading={loadingStates.maybe}
+              >
+                Change to Maybe
+              </Button>
+              
+              <Button 
+                onClick={handleDeclineGame}
+                variant="secondary"
+                loading={loadingStates.declining}
+              >
+                Can't make it
+              </Button>
+            </div>
+          </div>
+        ) : hasMaybe ? (
+          <div className="space-y-8">
+            <div className="w-24 h-px bg-gradient-to-r from-transparent via-yellow-400 to-transparent mx-auto"></div>
+            
+            <p className="text-center text-yellow-400 font-medium mb-6">🤔 You might attend this game</p>
+            
+            <div className="space-y-6">
+              <h4 className="text-center text-sm font-light text-gray-500">Ready to commit?</h4>
+              <div className="flex justify-center gap-2">
+                <select
+                  value={arrivalTime.split(':')[0] || '11'}
+                  onChange={(e) => {
+                    const minutes = arrivalTime.split(':')[1] || '00';
+                    setArrivalTime(`${e.target.value}:${minutes}`);
+                  }}
+                  className="bg-gray-900 border border-gray-700 focus:border-blue-400 outline-none px-3 py-3 text-lg font-light text-white rounded-lg transition-all duration-300 text-center"
+                >
+                  {Array.from({length: 12}, (_, i) => i + 1).map(hour => (
+                    <option key={hour} value={hour.toString().padStart(2, '0')} className="bg-gray-900">{hour}</option>
+                  ))}
+                  {Array.from({length: 12}, (_, i) => i + 13).map(hour => (
+                    <option key={hour} value={hour.toString()} className="bg-gray-900">{hour}</option>
+                  ))}
+                </select>
+                <span className="flex items-center text-gray-400 text-lg">:</span>
+                <select
+                  value={arrivalTime.split(':')[1] || '00'}
+                  onChange={(e) => {
+                    const hours = arrivalTime.split(':')[0] || '11';
+                    setArrivalTime(`${hours}:${e.target.value}`);
+                  }}
+                  className="bg-gray-900 border border-gray-700 focus:border-blue-400 outline-none px-3 py-3 text-lg font-light text-white rounded-lg transition-all duration-300 text-center"
+                >
+                  {['00', '15', '30', '45'].map(minute => (
+                    <option key={minute} value={minute} className="bg-gray-900">{minute}</option>
+                  ))}
+                </select>
+              </div>
+              
+              <div className="space-y-3">
+                <Button 
+                  onClick={handleJoinGame}
+                  disabled={!arrivalTime}
+                  loading={loadingStates.joining}
+                  className="w-full"
+                >
+                  Join Game
                 </Button>
                 
                 <Button 
                   onClick={handleDeclineGame}
                   variant="secondary"
                   loading={loadingStates.declining}
+                  className="w-full"
                 >
                   Can't make it
                 </Button>
               </div>
             </div>
           </div>
-        ) : isAttending ? (
-          <div className="space-y-8">
-            <div className="w-24 h-px bg-gradient-to-r from-transparent via-blue-400 to-transparent mx-auto"></div>
-            
-            <p className="text-center text-blue-400 font-medium mb-6">You're attending this game</p>
-            
-            <Button 
-              onClick={handleDeclineGame}
-              variant="secondary"
-              loading={loadingStates.declining}
-              className="w-full"
-            >
-              Can't make it anymore
-            </Button>
-          </div>
         ) : hasDeclined ? (
           <div className="space-y-8">
             <div className="w-24 h-px bg-gradient-to-r from-transparent via-red-400 to-transparent mx-auto"></div>
             
-            <p className="text-center text-red-400 font-light mb-6">You've declined this game</p>
+            <p className="text-center text-red-400 font-light mb-6">❌ You've declined this game</p>
             
             <div className="space-y-6">
               <h4 className="text-center text-sm font-light text-gray-500">Change your mind?</h4>
@@ -413,18 +589,61 @@ const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGam
                 </select>
               </div>
               
-              <Button 
-                onClick={handleJoinGame}
-                disabled={!arrivalTime}
-                loading={loadingStates.joining}
-                size="lg"
-                className="w-full"
-              >
-                Join Game
-              </Button>
+              <div className="space-y-3">
+                <Button 
+                  onClick={handleJoinGame}
+                  disabled={!arrivalTime}
+                  loading={loadingStates.joining}
+                  className="w-full"
+                >
+                  Join Game
+                </Button>
+                
+                <Button 
+                  onClick={handleMaybeGame}
+                  variant="secondary"
+                  loading={loadingStates.maybe}
+                  className="w-full"
+                >
+                  Maybe
+                </Button>
+              </div>
             </div>
           </div>
         ) : null}
+
+        {/* Haven't Responded - Bottom Section */}
+        {haventResponded.length > 0 && (
+          <div className="mt-16">
+            <div className="w-24 h-px bg-gradient-to-r from-transparent via-gray-600 to-transparent mx-auto mb-8"></div>
+            
+            <div>
+              <h4 className="text-center text-base font-semibold text-gray-400 mb-8">
+                ⏳ Haven't Responded (<AnimatedCounter value={haventResponded.length} className="font-bold" />)
+              </h4>
+              <div className="space-y-3">
+                {haventResponded.map((nonResponder, idx) => {
+                  const displayName = nonResponder.username || nonResponder.googleName || nonResponder.name || 'Unknown User';
+                  const photoUrl = nonResponder.photoURL || nonResponder.photo;
+                  return (
+                    <div key={idx} className="flex items-center justify-between py-4 px-4 bg-gray-900/10 rounded-lg border border-gray-700/30">
+                      <div className="flex items-center gap-4">
+                        {photoUrl && (
+                          <img 
+                            src={photoUrl} 
+                            alt={displayName} 
+                            className="w-8 h-8 rounded-full opacity-60 border-2 border-gray-500/30"
+                          />
+                        )}
+                        <span className="font-medium text-gray-400">{displayName}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
         
         
         </div>

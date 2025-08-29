@@ -29,8 +29,15 @@ const GameCard = ({ game, onClick, statusIcon }) => {
         </div>
         <div className="flex flex-col items-end gap-3 ml-4">
           <div className="flex items-center gap-2 bg-gray-800/50 rounded-lg px-3 py-1.5">
-            <Users className="w-4 h-4 text-blue-400" />
-            <AnimatedCounter value={game.attendees.length} className="text-sm font-semibold text-blue-300" />
+            <Users className="w-4 h-4 text-green-400" />
+            <AnimatedCounter value={game.attendees?.length || 0} className="text-sm font-semibold text-green-300" />
+            {game.maybe?.length > 0 && (
+              <>
+                <span className="text-gray-500">+</span>
+                <AnimatedCounter value={game.maybe.length} className="text-sm font-semibold text-yellow-400" />
+                <span className="text-xs text-gray-500">?</span>
+              </>
+            )}
           </div>
           <div className="flex items-center gap-2 bg-gray-800/30 rounded-lg px-3 py-1.5">
             <AnimatedWeatherIcon iconName={game.weather.icon} className="w-4 h-4" />

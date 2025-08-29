@@ -30,7 +30,11 @@ const NextGamePreview = ({ games }) => {
           <div className="flex items-center justify-center gap-6 text-xs text-gray-500">
             <div className="flex items-center gap-1">
               <Users className="w-3 h-3" />
-              <span>{nextGame.attendees.length} players</span>
+              <span>
+                {nextGame.attendees?.length || 0}
+                {nextGame.maybe?.length > 0 && ` (+${nextGame.maybe.length}?)`}
+                {' players'}
+              </span>
             </div>
             <div className="flex items-center gap-1">
               <WeatherIcon className="w-3 h-3" />
