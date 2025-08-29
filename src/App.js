@@ -620,6 +620,13 @@ const BasketballSchedulerContent = () => {
       subtitle: user?.name,
       rightContent: (
         <div className="flex items-center gap-3">
+          {/* Edit button - show first so it doesn't cause layout shift */}
+          {isGameDetails && selectedEvent?.organizerUid === user?.uid && (
+            <Button onClick={handleEditGame} size="sm" variant="secondary">
+              Edit
+            </Button>
+          )}
+          
           {/* Back button - always visible, disabled on main games view */}
           <Button 
             onClick={() => {
@@ -655,13 +662,6 @@ const BasketballSchedulerContent = () => {
           >
             <Settings className="w-4 h-4" />
           </Button>
-          
-          {/* Edit button - only show on game details when user is organizer */}
-          {isGameDetails && selectedEvent?.organizerUid === user?.uid && (
-            <Button onClick={handleEditGame} size="sm">
-              Edit
-            </Button>
-          )}
         </div>
       )
     };

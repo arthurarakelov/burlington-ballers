@@ -18,7 +18,6 @@ const WesMode = ({ user, children }) => {
   ];
 
   const wesImages = [
-    "https://i.ytimg.com/vi/JZSTZ4-6TZI/oardefault.jpg?sqp=-oaymwEoCJUDENAFSFqQAgHyq4qpAxcIARUAAIhC2AEB4gEKCBgQAhgGOAFAAQ==&rs=AOn4CLAc_UwglcuLsfJpQuazUYEvXfkhvg",
     "https://i.ytimg.com/vi/zynIW9mwIVI/oardefault.jpg?sqp=-oaymwEoCJUDENAFSFqQAgHyq4qpAxcIARUAAIhC2AEB4gEKCBgQAhgGOAFAAQ==&rs=AOn4CLAKzVB2iC09MvqflE6laKtYctWt7A",
     "https://i.ytimg.com/vi/ITE1f_ZMsD8/oar2.jpg?sqp=-oaymwEoCJUDENAFSFqQAgHyq4qpAxcIARUAAIhC2AEB4gEKCBgQAhgGOAFAAQ==&rs=AOn4CLBiEWLscYUSWMwoexy21qlQgHd9IQ",
     "https://i.ytimg.com/vi/7bzz_qNOToc/oardefault.jpg?sqp=-oaymwEoCJUDENAFSFqQAgHyq4qpAxcIARUAAIhC2AEB4gEKCBgQAhgGOAFAAQ==&rs=AOn4CLAUN5sd9VB2txKM-Hj2HziWE3YO6A",
