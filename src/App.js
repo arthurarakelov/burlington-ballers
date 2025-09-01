@@ -26,7 +26,6 @@ const BasketballSchedulerContent = () => {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const [transitionType, setTransitionType] = useState('fade'); // 'fade', 'slideLeft', 'slideRight', 'slideUp', 'slideDown', 'flip', 'zoom'
   
   const [games, setGames] = useState([]);
 
@@ -44,13 +43,16 @@ const BasketballSchedulerContent = () => {
   useEffect(() => {
     if (user) {
       setLoading(true);
+      setGames([]); // Clear games immediately when starting to load
       
-      // Clean up past games first, then subscribe to updates
+      // Clean up past games and old chat messages first, then subscribe to updates
       const initializeGames = async () => {
         try {
           await gameService.deletePastGames();
+          const { chatService } = await import('./services/chatService');
+          await chatService.cleanupOldMessages();
         } catch (error) {
-          console.error('Error cleaning up past games:', error);
+          console.error('Error cleaning up past games and old messages:', error);
         }
         
         const unsubscribe = gameService.subscribeToGames((gamesData) => {
@@ -78,12 +80,15 @@ const BasketballSchedulerContent = () => {
     } else {
       // Show real game data even when not authenticated (read-only preview)
       setLoading(true);
+      setGames([]); // Clear games immediately when starting to load
       
       const initializeGames = async () => {
         try {
           await gameService.deletePastGames();
+          const { chatService } = await import('./services/chatService');
+          await chatService.cleanupOldMessages();
         } catch (error) {
-          console.error('Error cleaning up past games:', error);
+          console.error('Error cleaning up past games and old messages:', error);
         }
         
         const unsubscribe = gameService.subscribeToGames((gamesData) => {
@@ -461,34 +466,24 @@ const BasketballSchedulerContent = () => {
   // Enhanced transition helpers with unique animations
   const transitionToGame = (game) => {
     setGameEditTrigger(0); // Reset edit trigger when navigating to new game
-    setTransitionType('slideUp'); // Games slide up to reveal details
     setIsTransitioning(true);
     setTimeout(() => {
       setSelectedEvent(game);
-      setTimeout(() => setIsTransitioning(false), 150);
-    }, 600);
+      setTimeout(() => setIsTransitioning(false), 50);
+    }, 150);
   };
 
   const [gameEditTrigger, setGameEditTrigger] = useState(0);
 
   const transitionToView = (view) => {
-    // Different transitions for different views
-    if (view === 'create') {
-      setTransitionType('slideLeft'); // Create slides in from right
-    } else if (view === 'settings') {
-      setTransitionType('slideLeft'); // Settings slides in from right too
-    } else {
-      setTransitionType('slideRight'); // Back to games slides in from left
-    }
     setIsTransitioning(true);
     setTimeout(() => {
       setCurrentView(view);
-      setTimeout(() => setIsTransitioning(false), 150);
-    }, 600);
+      setTimeout(() => setIsTransitioning(false), 50);
+    }, 150);
   };
 
   const transitionBack = async () => {
-    setTransitionType('slideDown'); // Back from details slides down
     setIsTransitioning(true);
     setTimeout(async () => {
       setSelectedEvent(null);
@@ -500,8 +495,19 @@ const BasketballSchedulerContent = () => {
       } catch (error) {
         console.error('Error refreshing games:', error);
       }
-      setTimeout(() => setIsTransitioning(false), 150);
-    }, 600);
+      setTimeout(() => setIsTransitioning(false), 50);
+    }, 150);
+  };
+
+  // Debug functions accessible from console
+  window.checkChatMessageAges = async () => {
+    const { chatService } = await import('./services/chatService');
+    return await chatService.checkMessageAges();
+  };
+
+  window.cleanupOldChatMessages = async () => {
+    const { chatService } = await import('./services/chatService');
+    return await chatService.cleanupOldMessages();
   };
 
   // Temporary debug function to manually update RSVPs - you can call this from console
@@ -643,14 +649,13 @@ const BasketballSchedulerContent = () => {
     );
   };
 
-  // Get transition classes for rolladex-style effect
+  // Simple fade transition
   const getTransitionClasses = () => {
     if (!isTransitioning) {
-      return "transition-all duration-700 ease-out opacity-100 transform-gpu";
+      return "transition-opacity duration-300 ease-out opacity-100";
     }
 
-    // Rolladex effect - rotate around Y axis with custom CSS
-    return "transition-all duration-700 ease-out opacity-0 transform-gpu rotateY-90 translateZ-50 scale-90";
+    return "transition-opacity duration-300 ease-out opacity-0";
   };
 
 
@@ -730,13 +735,9 @@ const BasketballSchedulerContent = () => {
               </div>
             </div>
 
-            {/* Enhanced background overlay with dramatic blur effect during transitions */}
-            {isTransitioning && (
-              <div className="fixed inset-0 bg-black/30 backdrop-blur-md z-20 transition-all duration-700 animate-pulse" />
-            )}
             
-            {/* Transitioning content with 3D perspective */}
-            <div className="perspective-1000 relative z-10 pt-28">
+            {/* Simple transitioning content */}
+            <div className="relative z-10 pt-28">
               <div className={getTransitionClasses()}>
                 {mainContent()}
               </div>

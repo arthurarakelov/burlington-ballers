@@ -8,7 +8,6 @@ class NotificationScheduler {
     this.scheduledJobs = new Map();
     this.lastNotificationCheck = null;
     this.gameChangeRateLimit = new Map(); // Track rate limiting for game changes
-    this.lastCleanupDate = null; // Track last cleanup date
   }
 
   // Start the notification scheduler
@@ -52,15 +51,7 @@ class NotificationScheduler {
       await this.sendDailyNotifications();
     }
 
-    // Run cleanup once per day at 2 AM
-    if (currentHour === 2 && currentMinute === 0) {
-      const today = now.toDateString();
-      if (this.lastCleanupDate !== today) {
-        console.log('2 AM cleanup time - running chat message cleanup...');
-        this.lastCleanupDate = today;
-        await this.runCleanupTasks();
-      }
-    }
+    // Note: Chat message cleanup now happens on app load, similar to past games cleanup
   }
 
   // Send all daily notifications (both RSVP and attendance reminders)
@@ -229,19 +220,6 @@ class NotificationScheduler {
     }
   }
 
-  // Run cleanup tasks (chat message cleanup, etc.)
-  async runCleanupTasks() {
-    try {
-      console.log('🧹 Running scheduled cleanup tasks...');
-      
-      // Clean up old chat messages
-      const deletedMessages = await chatService.cleanupOldMessages();
-      console.log(`✅ Cleanup completed: ${deletedMessages} old chat messages removed`);
-      
-    } catch (error) {
-      console.error('❌ Error running cleanup tasks:', error);
-    }
-  }
 }
 
 export const notificationScheduler = new NotificationScheduler();

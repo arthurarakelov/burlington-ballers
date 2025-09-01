@@ -10,8 +10,21 @@ import { useMouseTracking } from '../../hooks/useMouseTracking';
 const GameDashboard = ({ user, games, loading, onCreateGame, onSelectGame, onJoinGame, onDeclineGame, onOpenSettings, hideHeader }) => {
   const mousePosition = useMouseTracking();
   
+  // Always show loading first, then empty state only when not loading
+  if (loading) {
+    return (
+      <div className="space-y-4 pt-4">
+        {[1, 2, 3].map(i => (
+          <div key={i} className="animate-slide-in-up" style={{ animationDelay: `${i * 100}ms` }}>
+            <GameCardSkeleton />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   // If no games and not loading, show empty state
-  if (!loading && games.length === 0) {
+  if (games.length === 0) {
     return <EmptyState onCreateGame={onCreateGame} />;
   }
   
@@ -42,44 +55,34 @@ const GameDashboard = ({ user, games, loading, onCreateGame, onSelectGame, onJoi
           )}
 
           {/* Games */}
-          {loading ? (
-            <div className="space-y-4">
-              {[1, 2, 3].map(i => (
-                <div key={i} className="animate-slide-in-up" style={{ animationDelay: `${i * 100}ms` }}>
-                  <GameCardSkeleton />
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {games.map((game, index) => (
-                <div 
-                  key={game.id} 
-                  className="animate-slide-in-up"
-                  style={{ animationDelay: `${index * 100}ms` }}
-                >
-                  <SwipeableGameCard 
-                    game={game}
-                    user={user}
-                    onClick={onSelectGame}
-                    onJoin={onJoinGame}
-                    onDecline={onDeclineGame}
-                  />
-                </div>
-              ))}
-              
-              {/* New Game Button */}
-              <div className="pt-6">
-                <Button 
-                  onClick={onCreateGame}
-                  className="w-full"
-                  size="lg"
-                >
-                  New Game
-                </Button>
+          <div className="space-y-4">
+            {games.map((game, index) => (
+              <div 
+                key={game.id} 
+                className="animate-slide-in-up"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                <SwipeableGameCard 
+                  game={game}
+                  user={user}
+                  onClick={onSelectGame}
+                  onJoin={onJoinGame}
+                  onDecline={onDeclineGame}
+                />
               </div>
+            ))}
+            
+            {/* New Game Button */}
+            <div className="pt-6">
+              <Button 
+                onClick={onCreateGame}
+                className="w-full"
+                size="lg"
+              >
+                New Game
+              </Button>
             </div>
-          )}
+          </div>
         </div>
       </div>
     </div>
