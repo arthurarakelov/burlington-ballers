@@ -32,31 +32,6 @@ class EmailService {
     }
   }
 
-  async sendAttendanceReminder(userEmail, userName, game) {
-    const templateParams = {
-      to_email: userEmail,
-      user_name: userName,
-      game_title: game.title,
-      game_date: game.date,
-      game_time: game.time,
-      game_location: game.location,
-      website_url: 'www.burlingtonballers.com',
-      type: 'Attendance Reminder'
-    };
-
-    try {
-      const response = await emailjs.send(
-        process.env.REACT_APP_EMAILJS_SERVICE_ID,
-        process.env.REACT_APP_EMAILJS_ATTENDANCE_TEMPLATE_ID,
-        templateParams
-      );
-      console.log('Attendance reminder sent successfully:', response);
-      return response;
-    } catch (error) {
-      console.error('Failed to send attendance reminder:', error);
-      throw error;
-    }
-  }
 
   async sendGameChangeNotification(userEmail, userName, game, changes) {
     const templateParams = {

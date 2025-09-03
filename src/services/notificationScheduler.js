@@ -135,15 +135,6 @@ class NotificationScheduler {
           }
         }
 
-        // Send attendance reminder to users who are attending
-        if (isAttending && user.emailPreferences.attendanceReminders) {
-          console.log(`Sending attendance reminder to ${user.email} for game: ${game.title}`);
-          try {
-            await emailService.sendAttendanceReminder(user.email, user.username || user.googleName, game);
-          } catch (error) {
-            console.error(`Failed to send attendance reminder to ${user.email}:`, error);
-          }
-        }
       }
     } catch (error) {
       console.error(`Error processing notifications for game ${game.id}:`, error);

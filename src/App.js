@@ -510,6 +510,29 @@ const BasketballSchedulerContent = () => {
     return await chatService.cleanupOldMessages();
   };
 
+  // Test email sending
+  window.testEmail = async (type = 'rsvp', email = 'your-email@gmail.com') => {
+    const { emailService } = await import('./services/emailService');
+    const testGame = {
+      title: 'Test Game',
+      date: '2024-01-15',
+      time: '7:00 PM',
+      location: 'Wildwood Park'
+    };
+    
+    try {
+      if (type === 'rsvp') {
+        await emailService.sendRSVPReminder(email, 'Test User', testGame);
+        console.log('✅ RSVP reminder test email sent!');
+      } else if (type === 'change') {
+        await emailService.sendGameChangeNotification(email, 'Test User', testGame, 'Game time changed');
+        console.log('✅ Game change test email sent!');
+      }
+    } catch (error) {
+      console.error('❌ Email test failed:', error);
+    }
+  };
+
   // Temporary debug function to manually update RSVPs - you can call this from console
   window.updateMyRSVPs = async () => {
     if (!user?.uid) {
