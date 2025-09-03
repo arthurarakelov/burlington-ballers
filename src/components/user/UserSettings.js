@@ -9,7 +9,6 @@ const UserSettings = ({ user, onBack, onUpdateSettings, hideHeader }) => {
   const [username, setUsername] = useState(user?.username || user?.name || '');
   const [emailPreferences, setEmailPreferences] = useState({
     rsvpReminders: user?.emailPreferences?.rsvpReminders ?? false,
-    attendanceReminders: user?.emailPreferences?.attendanceReminders ?? false,
     gameChangeNotifications: user?.emailPreferences?.gameChangeNotifications ?? false
   });
   const [wesMode, setWesMode] = useState(user?.wesMode ?? false);
@@ -26,7 +25,6 @@ const UserSettings = ({ user, onBack, onUpdateSettings, hideHeader }) => {
     if (user?.emailPreferences) {
       setEmailPreferences({
         rsvpReminders: user.emailPreferences.rsvpReminders ?? false,
-        attendanceReminders: user.emailPreferences.attendanceReminders ?? false,
         gameChangeNotifications: user.emailPreferences.gameChangeNotifications ?? false
       });
     }
@@ -121,24 +119,6 @@ const UserSettings = ({ user, onBack, onUpdateSettings, hideHeader }) => {
                   </label>
                 </div>
 
-                <div className="flex items-center justify-between py-3">
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-200">Attendance Reminders</h3>
-                    <p className="text-xs text-gray-500">24hr reminders for games I'm attending</p>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={emailPreferences.attendanceReminders}
-                      onChange={(e) => setEmailPreferences(prev => ({
-                        ...prev,
-                        attendanceReminders: e.target.checked
-                      }))}
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                  </label>
-                </div>
 
                 <div className="flex items-center justify-between py-3">
                   <div>
