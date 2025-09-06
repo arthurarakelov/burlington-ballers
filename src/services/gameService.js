@@ -168,7 +168,7 @@ export const gameService = {
       const games = [];
       
       for (const doc of snapshot.docs) {
-        const gameData = { id: doc.id, ...doc.data() };
+        let gameData = { id: doc.id, ...doc.data() };
         
         // Get RSVPs for this game
         const rsvps = await this.getGameRSVPs(doc.id);
@@ -176,6 +176,14 @@ export const gameService = {
         gameData.attendees = rsvps.filter(rsvp => rsvp.status === 'attending');
         gameData.maybe = rsvps.filter(rsvp => rsvp.status === 'maybe');
         gameData.declined = rsvps.filter(rsvp => rsvp.status === 'declined');
+        
+        // Refresh weather data for current forecasts
+        try {
+          const { weatherService } = await import('./weatherService');
+          gameData = await weatherService.refreshWeatherForGame(gameData);
+        } catch (error) {
+          console.error('Error refreshing weather for game:', gameData.id, error);
+        }
         
         games.push(gameData);
       }
@@ -196,7 +204,7 @@ export const gameService = {
         const games = [];
         
         for (const doc of snapshot.docs) {
-          const gameData = { id: doc.id, ...doc.data() };
+          let gameData = { id: doc.id, ...doc.data() };
           
           // Get RSVPs for this game
           const rsvps = await this.getGameRSVPs(doc.id);
@@ -204,6 +212,14 @@ export const gameService = {
           gameData.attendees = rsvps.filter(rsvp => rsvp.status === 'attending');
           gameData.maybe = rsvps.filter(rsvp => rsvp.status === 'maybe');
           gameData.declined = rsvps.filter(rsvp => rsvp.status === 'declined');
+          
+          // Refresh weather data for current forecasts
+          try {
+            const { weatherService } = await import('./weatherService');
+            gameData = await weatherService.refreshWeatherForGame(gameData);
+          } catch (error) {
+            console.error('Error refreshing weather for game:', gameData.id, error);
+          }
           
           games.push(gameData);
         }

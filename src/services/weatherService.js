@@ -38,11 +38,15 @@ export const weatherService = {
         const data = cachedData.data();
         const cacheTime = data.cachedAt?.toDate();
         
-        // Use cached data if it's less than 12 hours old
-        if (cacheTime && (now - cacheTime) < 12 * 60 * 60 * 1000) {
-          console.log('Using cached weather data for', gameDate, data.weather);
+        // Use cached data if it's less than 2 hours old (fresher forecasts)
+        if (cacheTime && (now - cacheTime) < 2 * 60 * 60 * 1000) {
+          console.log('🌤️ Using cached weather data for', gameDate, ':', data.weather);
           return data.weather;
+        } else {
+          console.log('⏰ Cache expired for', gameDate, '- fetching fresh data');
         }
+      } else {
+        console.log('💾 No cache found for', gameDate, '- fetching fresh data');
       }
 
       console.log('Fetching fresh weather data for', gameDate);
@@ -154,5 +158,23 @@ export const weatherService = {
       'Fog': 'Cloud'
     };
     return icons[weatherMain] || 'Sun';
+  },
+
+  // Update weather for existing games (called when displaying games)
+  async refreshWeatherForGame(game) {
+    try {
+      // Get fresh weather data for the game date
+      const freshWeather = await this.getWeatherData(game.date, game.time);
+      
+      // Return game with updated weather
+      return {
+        ...game,
+        weather: freshWeather
+      };
+    } catch (error) {
+      console.error('Error refreshing weather for game:', error);
+      // Return original game if weather refresh fails
+      return game;
+    }
   }
 };
