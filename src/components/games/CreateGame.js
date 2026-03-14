@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { LOCATIONS } from '../../constants/locations';
-import { getNextSaturday, getTodayDate, getMaxDate, isValidGameDate, formatDateWithDay, convertTo12Hour } from '../../utils/dateUtils';
+import { getNextSaturday, getTodayDate, getMaxDate, isValidGameDate, convertTo12Hour } from '../../utils/dateUtils';
 import { weatherService } from '../../services/weatherService';
 import FloatingOrbs from '../ui/FloatingOrbs';
 import Button from '../ui/Button';
@@ -42,17 +42,14 @@ const CreateGame = ({ onBack, onCreateGame, hideHeader }) => {
     try {
       const selectedLocation = LOCATIONS.find(loc => loc.value === newGame.location);
       
-      // Fetch real weather data
-      console.log('Fetching weather for', newGame.date, newGame.time);
       let weather;
       try {
         weather = await weatherService.getWeatherData(newGame.date, newGame.time);
-        console.log('Weather data received:', weather);
       } catch (weatherError) {
         console.error('Weather service failed:', weatherError);
         weather = { temp: 75, condition: "TBD", icon: "Sun" };
       }
-      
+
       const gameData = {
         title: `${newGame.location} Game`,
         location: selectedLocation.address,
@@ -61,15 +58,13 @@ const CreateGame = ({ onBack, onCreateGame, hideHeader }) => {
         time: convertTo12Hour(newGame.time),
         weather: weather
       };
-      
-      console.log('Submitting game data:', gameData);
-      
+
       await onCreateGame(gameData);
       // Only reset form after successful creation
       setNewGame({ location: '', date: '', time: '11:00' });
       setDateError('');
     } catch (error) {
-      console.error('Error in CreateGame component:', error);
+      console.error('Error creating game:', error);
     } finally {
       setCreating(false);
     }
@@ -158,12 +153,6 @@ const CreateGame = ({ onBack, onCreateGame, hideHeader }) => {
             Create Game
           </Button>
           
-          {/* Debug info */}
-          <div className="mt-8 text-xs text-gray-600">
-            <p>Location: {newGame.location || 'Not selected'}</p>
-            <p>Date: {newGame.date ? formatDateWithDay(newGame.date) : 'Not set'}</p>
-            <p>Time: {newGame.time || 'Not set'}</p>
-          </div>
         </div>
       </div>
     </div>

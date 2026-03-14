@@ -1,7 +1,6 @@
-import { collection, getDocs, query, where, doc, getDoc, setDoc } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firestore';
 import { db } from './firebase';
 import { emailService } from './emailService';
-import { chatService } from './chatService';
 
 class NotificationScheduler {
   constructor() {
@@ -12,9 +11,6 @@ class NotificationScheduler {
 
   // Start the notification scheduler
   start() {
-    console.log('Starting notification scheduler...');
-    
-    // Check for notifications every minute
     this.intervalId = setInterval(() => {
       this.checkAndSendNotifications();
     }, 60000); // 60 seconds
@@ -39,8 +35,6 @@ class NotificationScheduler {
 
     // Only send notifications at 5:00 PM (17:00)
     if (currentHour === 17 && currentMinute === 0) {
-      console.log('5 PM notification time - checking for notifications to send...');
-      
       // Prevent sending multiple times in the same minute
       const today = now.toDateString();
       if (this.lastNotificationCheck === today) {
@@ -57,8 +51,6 @@ class NotificationScheduler {
   // Send all daily notifications (both RSVP and attendance reminders)
   async sendDailyNotifications() {
     try {
-      console.log('Sending daily notifications...');
-      
       // Get tomorrow's date for checking games
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
@@ -69,24 +61,16 @@ class NotificationScheduler {
       const gamesQuery = query(gamesRef, where('date', '==', tomorrowDateString));
       const gamesSnapshot = await getDocs(gamesQuery);
 
-      if (gamesSnapshot.empty) {
-        console.log('No games tomorrow, skipping notifications');
-        return;
-      }
+      if (gamesSnapshot.empty) return;
 
       const games = gamesSnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }));
 
-      console.log(`Found ${games.length} games for tomorrow, checking notifications...`);
-
-      // Process each game
       for (const game of games) {
         await this.processGameNotifications(game);
       }
-
-      console.log('Daily notifications completed');
     } catch (error) {
       console.error('Error sending daily notifications:', error);
     }
@@ -109,11 +93,8 @@ class NotificationScheduler {
       const rsvpsSnapshot = await getDocs(rsvpsQuery);
       
       const rsvps = rsvpsSnapshot.docs.map(doc => doc.data());
-      const attendingUsers = rsvps.filter(rsvp => rsvp.status === 'attending');
-      const declinedUsers = rsvps.filter(rsvp => rsvp.status === 'declined');
       const respondedUserIds = rsvps.map(rsvp => rsvp.userUid);
 
-      // Process each user
       for (const userDoc of usersSnapshot.docs) {
         const user = userDoc.data();
         const userId = userDoc.id;
@@ -123,11 +104,8 @@ class NotificationScheduler {
         }
 
         const hasResponded = respondedUserIds.includes(userId);
-        const isAttending = attendingUsers.some(rsvp => rsvp.userUid === userId);
 
-        // Send RSVP reminder to users who haven't responded
         if (!hasResponded && user.emailPreferences.rsvpReminders) {
-          console.log(`Sending RSVP reminder to ${user.email} for game: ${game.title}`);
           try {
             await emailService.sendRSVPReminder(user.email, user.username || user.googleName, game);
           } catch (error) {
@@ -148,10 +126,7 @@ class NotificationScheduler {
       const rateLimitKey = `${gameId}_${new Date().getHours()}`;
       const currentCount = this.gameChangeRateLimit.get(rateLimitKey) || 0;
       
-      if (currentCount >= 2) {
-        console.log(`Rate limit reached for game ${gameId} this hour`);
-        return;
-      }
+      if (currentCount >= 2) return;
 
       // Get users who have RSVP'd yes to this game
       const rsvpsRef = collection(db, 'rsvps');
@@ -162,10 +137,7 @@ class NotificationScheduler {
       );
       const rsvpsSnapshot = await getDocs(rsvpsQuery);
 
-      if (rsvpsSnapshot.empty) {
-        console.log('No attending users for this game, skipping change notifications');
-        return;
-      }
+      if (rsvpsSnapshot.empty) return;
 
       const attendingUsers = rsvpsSnapshot.docs.map(doc => doc.data());
 
@@ -183,7 +155,6 @@ class NotificationScheduler {
             continue;
           }
 
-          console.log(`Sending game change notification to ${user.email} for game: ${newGame.title}`);
           await emailService.sendGameChangeNotification(
             user.email, 
             user.username || user.googleName, 
@@ -200,7 +171,7 @@ class NotificationScheduler {
 
       // Clean up old rate limit entries (keep only current hour)
       const currentHour = new Date().getHours();
-      for (const [key, value] of this.gameChangeRateLimit.entries()) {
+      for (const [key] of this.gameChangeRateLimit.entries()) {
         if (!key.endsWith(`_${currentHour}`)) {
           this.gameChangeRateLimit.delete(key);
         }

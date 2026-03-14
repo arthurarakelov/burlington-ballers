@@ -53,16 +53,6 @@ const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGam
   
   const isOrganizer = game.organizerUid === user?.uid;
 
-  // For backward compatibility, also check old structure
-  const legacyAttendees = game.attendees || [];
-  const legacyDeclined = game.declined || [];
-  const allAttending = [...attending, ...legacyAttendees].filter((item, index, self) => 
-    index === self.findIndex(t => t.userUid === item.userUid)
-  );
-  const allDeclined = [...declined, ...legacyDeclined].filter((item, index, self) => 
-    index === self.findIndex(t => t.userUid === item.userUid)
-  );
-
   // Load all users to calculate who hasn't responded
   useEffect(() => {
     const loadUsers = async () => {

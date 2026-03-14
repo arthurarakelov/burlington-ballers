@@ -19,35 +19,6 @@ import { isGameInPast } from '../utils/dateUtils';
 const gamesRef = collection(db, 'games');
 const rsvpsRef = collection(db, 'rsvps');
 
-// Helper function to calculate comprehensive RSVP data for a game
-export const calculateRSVPData = (game, allUsers = []) => {
-  const rsvps = game.rsvps || [];
-  
-  // Group RSVPs by status
-  const attending = rsvps.filter(rsvp => rsvp.status === 'attending');
-  const maybe = rsvps.filter(rsvp => rsvp.status === 'maybe');
-  const declined = rsvps.filter(rsvp => rsvp.status === 'declined');
-  
-  // Get UIDs of users who have responded
-  const respondedUIDs = new Set(rsvps.map(rsvp => rsvp.userUid));
-  
-  // Calculate haven't responded (this would need all users data to be accurate)
-  // For now, we'll just track known non-responders from game context
-  const haventResponded = allUsers.filter(user => !respondedUIDs.has(user.uid));
-  
-  return {
-    attending: attending.sort((a, b) => {
-      if (!a.arrivalTime || !b.arrivalTime) return 0;
-      const timeA = new Date(`1970/01/01 ${a.arrivalTime}`);
-      const timeB = new Date(`1970/01/01 ${b.arrivalTime}`);
-      return timeA - timeB;
-    }),
-    maybe: maybe.sort((a, b) => (a.userName || '').localeCompare(b.userName || '')),
-    declined: declined.sort((a, b) => (a.userName || '').localeCompare(b.userName || '')),
-    haventResponded: haventResponded.sort((a, b) => (a.name || '').localeCompare(b.name || ''))
-  };
-};
-
 export const gameService = {
   // Create a new game
   async createGame(gameData, user) {
@@ -96,8 +67,6 @@ export const gameService = {
       
       // Then delete the game
       await deleteDoc(doc(db, 'games', gameId));
-      
-      console.log('Game and related RSVPs deleted successfully');
     } catch (error) {
       console.error('Error deleting game:', error);
       throw error;
@@ -125,8 +94,6 @@ export const gameService = {
         address: newAddress,
         updatedAt: serverTimestamp()
       });
-      
-      console.log('Game location updated successfully');
     } catch (error) {
       console.error('Error updating game location:', error);
       throw error;
@@ -152,8 +119,6 @@ export const gameService = {
         time: newTime,
         updatedAt: serverTimestamp()
       });
-      
-      console.log('Game time updated successfully');
     } catch (error) {
       console.error('Error updating game time:', error);
       throw error;
@@ -336,34 +301,24 @@ export const gameService = {
   // Delete past games automatically
   async deletePastGames() {
     try {
-      console.log('Checking for past games to delete...');
       const snapshot = await getDocs(gamesRef);
       const pastGames = [];
-      
+
       for (const doc of snapshot.docs) {
         const gameData = doc.data();
         if (isGameInPast(gameData.date, gameData.time)) {
           pastGames.push({ id: doc.id, ...gameData });
         }
       }
-      
-      console.log(`Found ${pastGames.length} past games to delete`);
-      
+
       for (const game of pastGames) {
-        console.log(`Deleting past game: ${game.title} on ${game.date} at ${game.time}`);
-        
-        // Delete all RSVPs for this game first
         const rsvpsQuery = query(rsvpsRef, where('gameId', '==', game.id));
         const rsvpsSnapshot = await getDocs(rsvpsQuery);
-        
         const deletePromises = rsvpsSnapshot.docs.map(doc => deleteDoc(doc.ref));
         await Promise.all(deletePromises);
-        
-        // Then delete the game
         await deleteDoc(doc(db, 'games', game.id));
       }
-      
-      console.log(`Successfully deleted ${pastGames.length} past games`);
+
       return pastGames.length;
     } catch (error) {
       console.error('Error deleting past games:', error);

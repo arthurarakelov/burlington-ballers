@@ -1,26 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 const AnimatedCounter = ({ value, duration = 800, className = '' }) => {
-  const [displayValue, setDisplayValue] = useState(0);
-  const [prevValue, setPrevValue] = useState(0);
+  const [displayValue, setDisplayValue] = useState(value);
+  const prevValueRef = useRef(value);
 
   useEffect(() => {
-    if (value === prevValue) return;
+    if (value === prevValueRef.current) return;
 
-    setPrevValue(displayValue);
+    const startValue = prevValueRef.current;
+    prevValueRef.current = value;
+
     const startTime = Date.now();
-    const startValue = displayValue;
     const change = value - startValue;
 
     const animateCount = () => {
       const elapsed = Date.now() - startTime;
       const progress = Math.min(elapsed / duration, 1);
-      
-      // Easing function for smooth animation
       const easeOutQuart = 1 - Math.pow(1 - progress, 4);
-      const currentValue = Math.round(startValue + change * easeOutQuart);
-      
-      setDisplayValue(currentValue);
+      setDisplayValue(Math.round(startValue + change * easeOutQuart));
 
       if (progress < 1) {
         requestAnimationFrame(animateCount);
@@ -28,7 +25,7 @@ const AnimatedCounter = ({ value, duration = 800, className = '' }) => {
     };
 
     requestAnimationFrame(animateCount);
-  }, [value, duration, displayValue, prevValue]);
+  }, [value, duration]);
 
   return (
     <span className={`transition-all duration-300 ${className}`}>

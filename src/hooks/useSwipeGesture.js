@@ -51,7 +51,7 @@ const useSwipeGesture = (onSwipeLeft, onSwipeRight, threshold = 50) => {
       element.removeEventListener('touchmove', onTouchMove);
       element.removeEventListener('touchend', onTouchEnd);
     };
-  }, [touchStart, touchEnd]);
+  }, [touchStart, touchEnd, onSwipeLeft, onSwipeRight]);
 
   return { elementRef, isSwiping };
 };

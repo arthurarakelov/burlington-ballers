@@ -25,14 +25,28 @@ service cloud.firestore {
     match /rsvps/{rsvpId} {
       // Anyone signed in can read RSVPs (needed to show attendee lists)
       allow read: if request.auth != null;
-      
+
       // Users can only create RSVPs for themselves
-      allow create: if request.auth != null 
+      allow create: if request.auth != null
         && request.auth.uid == request.resource.data.userUid;
-      
+
       // Users can only update/delete their own RSVPs
-      allow update, delete: if request.auth != null 
+      allow update, delete: if request.auth != null
         && request.auth.uid == resource.data.userUid;
+    }
+
+    // Chat: Authenticated users can read and post messages
+    match /chat/{messageId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+        && request.auth.uid == request.resource.data.userUid;
+      allow delete: if request.auth != null
+        && request.auth.uid == resource.data.userUid;
+    }
+
+    // Weather cache: Authenticated users can read/write cached weather data
+    match /weatherCache/{cacheId} {
+      allow read, write: if request.auth != null;
     }
   }
 }

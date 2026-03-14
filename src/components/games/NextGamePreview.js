@@ -1,6 +1,7 @@
 import React from 'react';
 import { Users } from 'lucide-react';
 import { formatDateWithDay } from '../../utils/dateUtils';
+import AnimatedWeatherIcon from '../ui/AnimatedWeatherIcon';
 
 const NextGamePreview = ({ games }) => {
   const now = new Date();
@@ -16,12 +17,11 @@ const NextGamePreview = ({ games }) => {
   if (upcomingGames.length === 0) return null;
   
   const nextGame = upcomingGames[0];
-  const WeatherIcon = nextGame.weather.icon;
-  
+
   return (
     <div className="mb-16">
       <div className="w-16 h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent mx-auto mb-8"></div>
-      
+
       <div className="text-center space-y-4">
         <h3 className="text-xs font-light tracking-[0.3em] text-gray-500 uppercase">Next Game</h3>
         <div className="space-y-2">
@@ -37,7 +37,7 @@ const NextGamePreview = ({ games }) => {
               </span>
             </div>
             <div className="flex items-center gap-1">
-              <WeatherIcon className="w-3 h-3" />
+              <AnimatedWeatherIcon iconName={nextGame.weather.icon} className="w-3 h-3" />
               <span>{nextGame.weather.temp}° {nextGame.weather.condition}</span>
             </div>
           </div>

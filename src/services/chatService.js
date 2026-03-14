@@ -70,67 +70,27 @@ export const chatService = {
   // Clean up messages older than 7 days
   async cleanupOldMessages() {
     try {
-      // Calculate date 7 days ago
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
       const cutoffTimestamp = Timestamp.fromDate(sevenDaysAgo);
 
-      console.log('🧹 Cleaning up chat messages older than:', sevenDaysAgo.toLocaleDateString());
-
-      // Query for old messages
       const oldMessagesQuery = query(
         chatRef,
         where('createdAt', '<', cutoffTimestamp)
       );
 
       const snapshot = await getDocs(oldMessagesQuery);
-      
-      if (snapshot.empty) {
-        console.log('✅ No old chat messages to clean up');
-        return 0;
-      }
 
-      // Delete old messages
-      const deletePromises = snapshot.docs.map(messageDoc => {
-        console.log('🗑️ Deleting old message:', messageDoc.id);
-        return deleteDoc(doc(chatRef, messageDoc.id));
-      });
+      if (snapshot.empty) return 0;
+
+      const deletePromises = snapshot.docs.map(messageDoc =>
+        deleteDoc(doc(chatRef, messageDoc.id))
+      );
 
       await Promise.all(deletePromises);
-      console.log(`✅ Successfully cleaned up ${snapshot.docs.length} old chat messages`);
-      
       return snapshot.docs.length;
     } catch (error) {
-      console.error('❌ Error cleaning up old chat messages:', error);
-      throw error;
-    }
-  },
-
-  // Debug function to check message ages
-  async checkMessageAges() {
-    try {
-      const q = query(chatRef, orderBy('createdAt', 'desc'));
-      const snapshot = await getDocs(q);
-      
-      console.log(`📊 Total messages: ${snapshot.docs.length}`);
-      
-      const now = new Date();
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      
-      snapshot.docs.forEach((doc, index) => {
-        const data = doc.data();
-        const createdAt = data.createdAt?.toDate() || new Date(0);
-        const ageInDays = Math.floor((now - createdAt) / (1000 * 60 * 60 * 24));
-        const isOld = createdAt < sevenDaysAgo;
-        
-        console.log(`${index + 1}. ${data.userName}: "${data.message?.substring(0, 50)}..." - ${ageInDays} days old ${isOld ? '⚠️ OLD' : '✅'}`);
-        console.log(`   Created: ${createdAt.toLocaleDateString()} ${createdAt.toLocaleTimeString()}`);
-      });
-      
-      return snapshot.docs.length;
-    } catch (error) {
-      console.error('Error checking message ages:', error);
+      console.error('Error cleaning up old chat messages:', error);
       throw error;
     }
   }

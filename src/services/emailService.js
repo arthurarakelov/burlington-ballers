@@ -24,7 +24,6 @@ class EmailService {
         process.env.REACT_APP_EMAILJS_RSVP_TEMPLATE_ID,
         templateParams
       );
-      console.log('RSVP reminder sent successfully:', response);
       return response;
     } catch (error) {
       console.error('Failed to send RSVP reminder:', error);
@@ -52,7 +51,6 @@ class EmailService {
         process.env.REACT_APP_EMAILJS_GAME_CHANGE_TEMPLATE_ID,
         templateParams
       );
-      console.log('Game change notification sent successfully:', response);
       return response;
     } catch (error) {
       console.error('Failed to send game change notification:', error);
