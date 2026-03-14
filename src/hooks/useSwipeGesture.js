@@ -51,6 +51,7 @@ const useSwipeGesture = (onSwipeLeft, onSwipeRight, threshold = 50) => {
       element.removeEventListener('touchmove', onTouchMove);
       element.removeEventListener('touchend', onTouchEnd);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [touchStart, touchEnd, onSwipeLeft, onSwipeRight]);
 
   return { elementRef, isSwiping };

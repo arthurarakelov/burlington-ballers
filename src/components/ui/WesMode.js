@@ -61,6 +61,7 @@ const WesMode = ({ user, children }) => {
     }, 1500); // Faster drops
     
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.wesMode]);
 
   // Rotate background images every 5 seconds in Wes Mode

@@ -82,12 +82,14 @@ const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGam
     if (editTrigger > 0) {
       handleEditGame();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editTrigger]);
 
   useEffect(() => {
     if (game) {
       setArrivalTime(convertTo24Hour(game.time));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [game.id, game.time]);
 
   const handleJoinGame = async () => {
@@ -97,17 +99,6 @@ const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGam
         await onJoinGame(game.id, arrivalTime);
       } finally {
         setLoadingStates(prev => ({ ...prev, joining: false }));
-      }
-    }
-  };
-
-  const handleLeaveGame = async () => {
-    if (!loadingStates.leaving) {
-      setLoadingStates(prev => ({ ...prev, leaving: true }));
-      try {
-        await onLeaveGame(game.id);
-      } finally {
-        setLoadingStates(prev => ({ ...prev, leaving: false }));
       }
     }
   };

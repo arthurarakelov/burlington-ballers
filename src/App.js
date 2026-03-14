@@ -69,6 +69,7 @@ const BasketballSchedulerContent = () => {
         if (unsubscribe) unsubscribe();
       });
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const sortByArrivalTime = (arr) =>
