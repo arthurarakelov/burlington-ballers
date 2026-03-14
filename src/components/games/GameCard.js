@@ -52,4 +52,4 @@ const GameCard = ({ game, onClick, statusIcon }) => {
   );
 };
 
-export default GameCard;
+export default React.memo(GameCard);

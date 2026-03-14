@@ -1,14 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft } from 'lucide-react';
 import { LOCATIONS } from '../../constants/locations';
 import { getNextSaturday, getTodayDate, getMaxDate, isValidGameDate, convertTo12Hour } from '../../utils/dateUtils';
 import { weatherService } from '../../services/weatherService';
-import FloatingOrbs from '../ui/FloatingOrbs';
 import Button from '../ui/Button';
-import { useMouseTracking } from '../../hooks/useMouseTracking';
 
 const CreateGame = ({ onBack, onCreateGame, hideHeader }) => {
-  const mousePosition = useMouseTracking();
   const [newGame, setNewGame] = useState({
     location: '',
     date: '',
@@ -29,19 +25,18 @@ const CreateGame = ({ onBack, onCreateGame, hideHeader }) => {
 
   const handleCreateGame = async () => {
     if (!newGame.location || !newGame.date || !newGame.time || creating) return;
-    
-    // Validate date
+
     if (!isValidGameDate(newGame.date)) {
       setDateError('Date must be today or future, within 90 days');
       return;
     }
-    
+
     setCreating(true);
     setDateError('');
-    
+
     try {
       const selectedLocation = LOCATIONS.find(loc => loc.value === newGame.location);
-      
+
       let weather;
       try {
         weather = await weatherService.getWeatherData(newGame.date, newGame.time);
@@ -60,7 +55,6 @@ const CreateGame = ({ onBack, onCreateGame, hideHeader }) => {
       };
 
       await onCreateGame(gameData);
-      // Only reset form after successful creation
       setNewGame({ location: '', date: '', time: '11:00' });
       setDateError('');
     } catch (error) {
@@ -73,13 +67,11 @@ const CreateGame = ({ onBack, onCreateGame, hideHeader }) => {
   const handleDateChange = (e) => {
     const selectedDate = e.target.value;
     setNewGame({...newGame, date: selectedDate});
-    
-    // Clear error when user changes date
+
     if (dateError) {
       setDateError('');
     }
-    
-    // Show immediate feedback
+
     if (selectedDate && !isValidGameDate(selectedDate)) {
       setDateError('Date must be today or future, within 90 days');
     }
@@ -87,24 +79,8 @@ const CreateGame = ({ onBack, onCreateGame, hideHeader }) => {
 
   return (
     <div className={hideHeader ? "" : "min-h-screen bg-black text-white relative overflow-hidden"}>
-      {!hideHeader && <FloatingOrbs mousePosition={mousePosition} />}
-      
       <div className="relative z-10">
         <div className={hideHeader ? "" : "max-w-lg mx-auto px-4 sm:px-6 py-12"}>
-        {/* Header */}
-        {!hideHeader && (
-          <div className="flex items-center justify-between mb-12">
-            <div>
-              <h1 className="text-xl font-light tracking-wide text-white mb-1">
-                Burlington Ballers
-              </h1>
-              <p className="text-xs text-gray-400">Create New Game</p>
-            </div>
-            <Button onClick={onBack} variant="secondary" size="sm">
-              <ArrowLeft className="w-4 h-4" />
-            </Button>
-          </div>
-        )}
 
         <div className="space-y-8">
           <select
@@ -119,7 +95,7 @@ const CreateGame = ({ onBack, onCreateGame, hideHeader }) => {
               </option>
             ))}
           </select>
-          
+
           <div className="grid grid-cols-2 gap-4">
             <input
               type="date"
@@ -142,8 +118,8 @@ const CreateGame = ({ onBack, onCreateGame, hideHeader }) => {
               {dateError}
             </div>
           )}
-          
-          <Button 
+
+          <Button
             onClick={handleCreateGame}
             disabled={!newGame.location || !newGame.date || !newGame.time || dateError}
             loading={creating}
@@ -152,7 +128,6 @@ const CreateGame = ({ onBack, onCreateGame, hideHeader }) => {
           >
             Create Game
           </Button>
-          
         </div>
       </div>
     </div>

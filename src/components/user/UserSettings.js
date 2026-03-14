@@ -1,11 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { User, Mail, Bell, Save, ArrowLeft } from 'lucide-react';
-import FloatingOrbs from '../ui/FloatingOrbs';
+import { User, Mail, Bell, Save } from 'lucide-react';
 import Button from '../ui/Button';
-import { useMouseTracking } from '../../hooks/useMouseTracking';
 
 const UserSettings = ({ user, onBack, onUpdateSettings, hideHeader }) => {
-  const mousePosition = useMouseTracking();
   const [username, setUsername] = useState(user?.username || user?.name || '');
   const [emailPreferences, setEmailPreferences] = useState({
     rsvpReminders: user?.emailPreferences?.rsvpReminders ?? false,
@@ -15,12 +12,10 @@ const UserSettings = ({ user, onBack, onUpdateSettings, hideHeader }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Scroll to top when component mounts
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, []);
 
-  // Update preferences when user data changes
   useEffect(() => {
     if (user?.emailPreferences) {
       setEmailPreferences({
@@ -72,27 +67,11 @@ const UserSettings = ({ user, onBack, onUpdateSettings, hideHeader }) => {
 
   return (
     <div className={hideHeader ? "" : "min-h-screen bg-black text-white relative overflow-hidden"}>
-      {!hideHeader && <FloatingOrbs mousePosition={mousePosition} />}
-      
       <div className="relative z-10">
         <div className={hideHeader ? "" : "max-w-lg mx-auto px-4 sm:px-6 py-12"}>
-          {/* Header */}
-          {!hideHeader && (
-            <div className="flex items-center justify-between mb-12">
-              <div>
-                <h1 className="text-xl font-light tracking-wide text-white mb-1">
-                  Settings
-                </h1>
-                <p className="text-xs text-gray-400">{user?.email}</p>
-              </div>
-              <Button onClick={onBack} variant="secondary" size="sm">
-                <ArrowLeft className="w-4 h-4" />
-              </Button>
-            </div>
-          )}
 
           <div className="space-y-5 pt-4">
-            {/* Email Notifications Section - moved to top */}
+            {/* Email Notifications Section */}
             <div className="bg-gray-900/30 backdrop-blur-sm border border-gray-800 rounded-xl p-6">
               <div className="flex items-center gap-3 mb-6">
                 <Mail className="w-5 h-5 text-green-400" />
@@ -118,7 +97,6 @@ const UserSettings = ({ user, onBack, onUpdateSettings, hideHeader }) => {
                     <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                   </label>
                 </div>
-
 
                 <div className="flex items-center justify-between py-3">
                   <div>
@@ -153,7 +131,7 @@ const UserSettings = ({ user, onBack, onUpdateSettings, hideHeader }) => {
               </div>
             </div>
 
-            {/* Profile Section - moved to bottom */}
+            {/* Profile Section */}
             <div className="bg-gray-900/30 backdrop-blur-sm border border-gray-800 rounded-xl p-6">
               <div className="flex items-center gap-3 mb-6">
                 <User className="w-5 h-5 text-blue-400" />
@@ -163,9 +141,9 @@ const UserSettings = ({ user, onBack, onUpdateSettings, hideHeader }) => {
               <div className="space-y-4">
                 <div className="flex items-center gap-4 mb-4">
                   {user?.photo && (
-                    <img 
-                      src={user.photo} 
-                      alt="Profile" 
+                    <img
+                      src={user.photo}
+                      alt="Profile"
                       className="w-12 h-12 rounded-full border-2 border-gray-700"
                     />
                   )}
@@ -212,14 +190,12 @@ const UserSettings = ({ user, onBack, onUpdateSettings, hideHeader }) => {
               </div>
             </div>
 
-            {/* Error message */}
             {error && (
               <div className="bg-red-900/20 border border-red-800/50 rounded-lg p-4">
                 <p className="text-red-400 text-sm">{error}</p>
               </div>
             )}
 
-            {/* Save button */}
             <Button
               onClick={handleSaveSettings}
               loading={isLoading}

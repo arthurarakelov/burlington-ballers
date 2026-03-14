@@ -1,7 +1,35 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Send, MessageCircle, Clock } from 'lucide-react';
 import Button from '../ui/Button';
 import { chatService } from '../../services/chatService';
+
+const ChatMessage = React.memo(({ message, formatTime }) => (
+  <div className="flex items-start gap-3">
+    {message.userPhoto && (
+      <img
+        src={message.userPhoto}
+        alt={message.userName}
+        className="w-8 h-8 rounded-full flex-shrink-0 mt-1"
+      />
+    )}
+    <div className="flex-1 min-w-0">
+      <div className="flex items-center gap-2 mb-1">
+        <span className="text-sm font-medium text-gray-200">
+          {message.userName}
+        </span>
+        <span className="text-xs text-gray-500 flex items-center gap-1">
+          <Clock className="w-3 h-3" />
+          {formatTime(message.createdAt)}
+        </span>
+      </div>
+      <div className="bg-gray-800/50 rounded-lg px-4 py-2">
+        <p className="text-sm text-gray-100 whitespace-pre-wrap break-words">
+          {message.message}
+        </p>
+      </div>
+    </div>
+  </div>
+));
 
 const GameChat = ({ user, hideHeader }) => {
   const [messages, setMessages] = useState([]);
@@ -9,15 +37,13 @@ const GameChat = ({ user, hideHeader }) => {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
 
-  // Scroll to top when component mounts
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, []);
 
-  // Subscribe to chat messages
   useEffect(() => {
     setLoading(true);
-    
+
     const unsubscribe = chatService.subscribeToMessages((messagesData) => {
       setMessages(messagesData);
       setLoading(false);
@@ -43,27 +69,27 @@ const GameChat = ({ user, hideHeader }) => {
     }
   };
 
-  const handleKeyPress = (e) => {
+  const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
     }
   };
 
-  const formatTime = (timestamp) => {
+  const formatTime = useCallback((timestamp) => {
     if (!timestamp) return '';
-    
+
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
     const now = new Date();
     const diffInHours = (now - date) / (1000 * 60 * 60);
-    
+
     if (diffInHours < 24) {
       return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     } else {
-      return date.toLocaleDateString([], { month: 'short', day: 'numeric' }) + 
+      return date.toLocaleDateString([], { month: 'short', day: 'numeric' }) +
              ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
-  };
+  }, []);
 
   if (loading) {
     return (
@@ -79,7 +105,7 @@ const GameChat = ({ user, hideHeader }) => {
   }
 
   return (
-    <div className="space-y-6 pt-4">
+    <div className="space-y-4 pt-4">
       {/* Message Input at Top */}
       {user && (
         <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl p-4">
@@ -87,9 +113,9 @@ const GameChat = ({ user, hideHeader }) => {
             <textarea
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
-              onKeyPress={handleKeyPress}
+              onKeyDown={handleKeyDown}
               placeholder="Type a message..."
-              className="flex-1 bg-gray-800/50 border border-gray-700 focus:border-blue-400 outline-none px-4 py-3 text-white rounded-lg resize-none transition-all duration-300"
+              className="flex-1 bg-gray-800/50 border border-gray-700 focus:border-blue-400 outline-none px-4 py-3 text-white rounded-lg resize-none transition-colors duration-200"
               rows="1"
               maxLength={500}
               disabled={sending}
@@ -99,7 +125,6 @@ const GameChat = ({ user, hideHeader }) => {
               loading={sending}
               disabled={!newMessage.trim() || sending}
               size="sm"
-              className="px-3 h-12"
             >
               <Send className="w-4 h-4" />
             </Button>
@@ -110,7 +135,7 @@ const GameChat = ({ user, hideHeader }) => {
         </div>
       )}
 
-      {/* Messages */}
+      {/* Messages - newest first (already sorted desc from Firestore) */}
       {messages.length === 0 ? (
         <div className="flex items-center justify-center py-20">
           <div className="text-center max-w-sm">
@@ -122,33 +147,9 @@ const GameChat = ({ user, hideHeader }) => {
           </div>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {messages.map((message) => (
-            <div key={message.id} className="flex items-start gap-3">
-              {message.userPhoto && (
-                <img 
-                  src={message.userPhoto} 
-                  alt={message.userName}
-                  className="w-8 h-8 rounded-full flex-shrink-0 mt-1"
-                />
-              )}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-sm font-medium text-gray-200">
-                    {message.userName}
-                  </span>
-                  <span className="text-xs text-gray-500 flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    {formatTime(message.createdAt)}
-                  </span>
-                </div>
-                <div className="bg-gray-800/50 rounded-lg px-4 py-2 max-w-md">
-                  <p className="text-sm text-gray-100 whitespace-pre-wrap">
-                    {message.message}
-                  </p>
-                </div>
-              </div>
-            </div>
+            <ChatMessage key={message.id} message={message} formatTime={formatTime} />
           ))}
         </div>
       )}

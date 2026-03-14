@@ -27,7 +27,7 @@ const LoginScreen = ({ games }) => {
               </h1>
             </div>
           </div>
-          
+
           {/* Sign in section */}
           <div className="text-center mb-10">
             <p className="text-sm text-gray-400 mb-8">Sign in with Google to join games and track your RSVPs</p>
@@ -42,8 +42,8 @@ const LoginScreen = ({ games }) => {
                 <p className="text-red-400 text-sm font-light">{error}</p>
               </div>
             )}
-            
-            <Button 
+
+            <Button
               onClick={handleGoogleSignIn}
               loading={loading}
               className="w-full flex items-center justify-center gap-3"
