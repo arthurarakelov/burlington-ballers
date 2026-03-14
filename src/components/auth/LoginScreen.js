@@ -18,9 +18,9 @@ const LoginScreen = ({ games }) => {
       <FloatingOrbs mousePosition={mousePosition} />
 
       <div className="relative z-10">
-        <div className="max-w-md mx-auto px-8 py-16">
+        <div className="max-w-lg mx-auto px-4 sm:px-6 py-12">
           {/* Header */}
-          <div className="flex items-center justify-between mb-20">
+          <div className="flex items-center justify-between mb-12">
             <div>
               <h1 className="text-xl font-light tracking-wide text-white mb-1">
                 Burlington Ballers
@@ -29,7 +29,7 @@ const LoginScreen = ({ games }) => {
           </div>
           
           {/* Sign in section */}
-          <div className="text-center mb-16">
+          <div className="text-center mb-10">
             <p className="text-sm text-gray-400 mb-8">Sign in with Google to join games and track your RSVPs</p>
           </div>
 

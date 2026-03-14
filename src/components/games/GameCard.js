@@ -9,7 +9,7 @@ const GameCard = ({ game, onClick, statusIcon }) => {
   return (
     <div 
       onClick={() => onClick(game)}
-      className="group cursor-pointer bg-gray-900/30 hover:bg-gray-800/60 backdrop-blur-sm border border-gray-800/50 hover:border-gray-600/80 rounded-xl p-6 transition-all duration-300 hover:shadow-2xl hover:shadow-gray-900/20 hover:scale-[1.02]"
+      className="group cursor-pointer bg-gray-900/30 hover:bg-gray-800/60 backdrop-blur-sm border border-gray-800/50 hover:border-gray-600/80 rounded-xl p-4 sm:p-5 transition-all duration-300 active:scale-[0.98] sm:hover:scale-[1.02] sm:hover:shadow-2xl sm:hover:shadow-gray-900/20"
     >
       <div className="flex items-start justify-between">
         <div className="flex-1 min-w-0">

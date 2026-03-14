@@ -454,7 +454,7 @@ const BasketballSchedulerContent = () => {
       title: 'Burlington Ballers',
       subtitle: user?.name,
       rightContent: (
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1">
           <Button
             onClick={() => {
               if (isGameDetails) {
@@ -467,7 +467,7 @@ const BasketballSchedulerContent = () => {
             size="sm"
             disabled={isGamesView}
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="w-5 h-5" />
           </Button>
 
           <Button
@@ -476,7 +476,7 @@ const BasketballSchedulerContent = () => {
             size="sm"
             disabled={currentView === 'chat'}
           >
-            <MessageCircle className="w-4 h-4" />
+            <MessageCircle className="w-5 h-5" />
           </Button>
 
           <Button
@@ -485,7 +485,7 @@ const BasketballSchedulerContent = () => {
             size="sm"
             disabled={currentView === 'settings'}
           >
-            <Settings className="w-4 h-4" />
+            <Settings className="w-5 h-5" />
           </Button>
         </div>
       )
@@ -500,24 +500,24 @@ const BasketballSchedulerContent = () => {
         <FloatingOrbs mousePosition={mousePosition} />
 
         <div className="relative z-10">
-          <div className="max-w-md mx-auto px-8 pb-32">
-            <div className="fixed top-0 left-0 right-0 bg-black/80 backdrop-blur-sm z-30 py-4">
-              <div className="max-w-md mx-auto px-8">
+          <div className="max-w-lg mx-auto px-4 sm:px-6 pb-20 safe-bottom">
+            <div className="fixed top-0 left-0 right-0 bg-black/80 backdrop-blur-sm z-30 safe-top">
+              <div className="max-w-lg mx-auto px-4 sm:px-6 py-3">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <h1 className="text-xl font-light tracking-wide text-white mb-1">
+                  <div className="min-w-0">
+                    <h1 className="text-lg font-light tracking-wide text-white truncate">
                       {headerContent.title}
                     </h1>
-                    <p className="text-xs text-gray-400">{headerContent.subtitle}</p>
+                    <p className="text-xs text-gray-400 truncate">{headerContent.subtitle}</p>
                   </div>
-                  <div className="relative">
+                  <div className="flex-shrink-0">
                     {headerContent.rightContent}
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="relative z-10 pt-28">
+            <div className="relative z-10 pt-20">
               <div className={getTransitionClasses()}>
                 {mainContent()}
               </div>

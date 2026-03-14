@@ -90,10 +90,10 @@ const CreateGame = ({ onBack, onCreateGame, hideHeader }) => {
       {!hideHeader && <FloatingOrbs mousePosition={mousePosition} />}
       
       <div className="relative z-10">
-        <div className={hideHeader ? "" : "max-w-md mx-auto px-8 py-16"}>
+        <div className={hideHeader ? "" : "max-w-lg mx-auto px-4 sm:px-6 py-12"}>
         {/* Header */}
         {!hideHeader && (
-          <div className="flex items-center justify-between mb-20">
+          <div className="flex items-center justify-between mb-12">
             <div>
               <h1 className="text-xl font-light tracking-wide text-white mb-1">
                 Burlington Ballers
@@ -106,7 +106,7 @@ const CreateGame = ({ onBack, onCreateGame, hideHeader }) => {
           </div>
         )}
 
-        <div className="space-y-12">
+        <div className="space-y-8">
           <select
             value={newGame.location}
             onChange={(e) => setNewGame({...newGame, location: e.target.value})}
@@ -120,7 +120,7 @@ const CreateGame = ({ onBack, onCreateGame, hideHeader }) => {
             ))}
           </select>
           
-          <div className="grid grid-cols-2 gap-8">
+          <div className="grid grid-cols-2 gap-4">
             <input
               type="date"
               value={newGame.date}
@@ -148,7 +148,7 @@ const CreateGame = ({ onBack, onCreateGame, hideHeader }) => {
             disabled={!newGame.location || !newGame.date || !newGame.time || dateError}
             loading={creating}
             size="lg"
-            className="w-full mt-16"
+            className="w-full mt-8"
           >
             Create Game
           </Button>

@@ -75,10 +75,10 @@ const UserSettings = ({ user, onBack, onUpdateSettings, hideHeader }) => {
       {!hideHeader && <FloatingOrbs mousePosition={mousePosition} />}
       
       <div className="relative z-10">
-        <div className={hideHeader ? "" : "max-w-md mx-auto px-8 py-16"}>
+        <div className={hideHeader ? "" : "max-w-lg mx-auto px-4 sm:px-6 py-12"}>
           {/* Header */}
           {!hideHeader && (
-            <div className="flex items-center justify-between mb-20">
+            <div className="flex items-center justify-between mb-12">
               <div>
                 <h1 className="text-xl font-light tracking-wide text-white mb-1">
                   Settings
@@ -91,7 +91,7 @@ const UserSettings = ({ user, onBack, onUpdateSettings, hideHeader }) => {
             </div>
           )}
 
-          <div className="space-y-8 pt-8">
+          <div className="space-y-5 pt-4">
             {/* Email Notifications Section - moved to top */}
             <div className="bg-gray-900/30 backdrop-blur-sm border border-gray-800 rounded-xl p-6">
               <div className="flex items-center gap-3 mb-6">

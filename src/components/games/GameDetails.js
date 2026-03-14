@@ -180,10 +180,10 @@ const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGam
       {!hideHeader && <FloatingOrbs mousePosition={mousePosition} />}
       
       <div className="relative z-10">
-        <div className={hideHeader ? "" : "max-w-md mx-auto px-8 py-16"}>
+        <div className={hideHeader ? "" : "max-w-lg mx-auto px-4 sm:px-6 py-12"}>
         {/* Header */}
         {!hideHeader && (
-          <div className="flex items-center justify-between mb-20">
+          <div className="flex items-center justify-between mb-12">
             <div>
               <h1 className="text-xl font-light tracking-wide text-white mb-1">
                 Burlington Ballers
@@ -197,16 +197,16 @@ const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGam
         )}
 
         {/* Event header */}
-        <div className="text-center mb-16">
-          <h3 className="text-4xl font-semibold mb-6 text-white leading-tight">{game.title}</h3>
-          <div className="space-y-3 text-gray-300">
+        <div className="text-center mb-8">
+          <h3 className="text-2xl sm:text-3xl font-semibold mb-4 text-white leading-tight">{game.title}</h3>
+          <div className="space-y-2.5 text-gray-300">
             {isEditingGame ? (
-              <div className="bg-gray-900/40 backdrop-blur-sm border border-gray-700 rounded-xl p-8 space-y-8">
+              <div className="bg-gray-900/40 backdrop-blur-sm border border-gray-700 rounded-xl p-5 space-y-5">
                 <div className="text-center">
-                  <h4 className="text-lg font-medium text-gray-200 mb-6">Edit Game Details</h4>
+                  <h4 className="text-lg font-medium text-gray-200 mb-4">Edit Game Details</h4>
                 </div>
-                
-                <div className="space-y-6">
+
+                <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-400 mb-3 tracking-wide">Location</label>
                     <select
@@ -234,10 +234,10 @@ const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGam
                   </div>
                 </div>
                 
-                <div className="w-16 h-px bg-gradient-to-r from-transparent via-orange-400 to-transparent mx-auto my-6"></div>
-                
-                <div className="space-y-4">
-                  <div className="flex gap-4">
+                <div className="w-16 h-px bg-gradient-to-r from-transparent via-orange-400 to-transparent mx-auto my-4"></div>
+
+                <div className="space-y-3">
+                  <div className="flex gap-3">
                     <Button
                       onClick={handleCancelEdit}
                       variant="secondary"
@@ -290,14 +290,14 @@ const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGam
           </div>
         </div>
 
-        <div className="w-24 h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent mx-auto mb-12"></div>
+        <div className="w-24 h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent mx-auto mb-8"></div>
 
         {/* RSVP Sections */}
-        <div className="space-y-12 mb-16">
+        <div className="space-y-8 mb-10">
           {/* Attending */}
           {attending.length > 0 && (
             <div>
-              <h4 className="text-center text-base font-semibold text-green-400 mb-8">
+              <h4 className="text-center text-base font-semibold text-green-400 mb-4">
                 ✅ Attending (<AnimatedCounter value={attending.length} className="font-bold" />)
               </h4>
               <div className="space-y-3">
@@ -323,7 +323,7 @@ const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGam
           {/* Maybe */}
           {maybe.length > 0 && (
             <div>
-              <h4 className="text-center text-base font-semibold text-yellow-400 mb-8">
+              <h4 className="text-center text-base font-semibold text-yellow-400 mb-4">
                 🤔 Maybe (<AnimatedCounter value={maybe.length} className="font-bold" />)
               </h4>
               <div className="space-y-3">
@@ -348,7 +348,7 @@ const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGam
           {/* Declined */}
           {declined.length > 0 && (
             <div>
-              <h4 className="text-center text-base font-semibold text-red-400 mb-8">
+              <h4 className="text-center text-base font-semibold text-red-400 mb-4">
                 ❌ Can't Make It (<AnimatedCounter value={declined.length} className="font-bold" />)
               </h4>
               <div className="space-y-3">
@@ -374,7 +374,7 @@ const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGam
 
         {/* RSVP Actions */}
         {hasntResponded ? (
-          <div className="space-y-8">
+          <div className="space-y-5">
             <div className="w-24 h-px bg-gradient-to-r from-transparent via-orange-400 to-transparent mx-auto"></div>
             
             <div className="space-y-6">
@@ -447,10 +447,10 @@ const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGam
             </div>
           </div>
         ) : isAttending ? (
-          <div className="space-y-8">
+          <div className="space-y-5">
             <div className="w-24 h-px bg-gradient-to-r from-transparent via-green-400 to-transparent mx-auto"></div>
             
-            <p className="text-center text-green-400 font-medium mb-6">✅ You're attending this game</p>
+            <p className="text-center text-green-400 font-medium mb-4">✅ You're attending this game</p>
             
             <div className="grid grid-cols-2 gap-4">
               <Button 
@@ -477,10 +477,10 @@ const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGam
             )}
           </div>
         ) : hasMaybe ? (
-          <div className="space-y-8">
+          <div className="space-y-5">
             <div className="w-24 h-px bg-gradient-to-r from-transparent via-yellow-400 to-transparent mx-auto"></div>
             
-            <p className="text-center text-yellow-400 font-medium mb-6">🤔 You might attend this game</p>
+            <p className="text-center text-yellow-400 font-medium mb-4">🤔 You might attend this game</p>
             
             <div className="space-y-6">
               <h4 className="text-center text-sm font-light text-gray-500">Ready to commit?</h4>
@@ -543,10 +543,10 @@ const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGam
             </div>
           </div>
         ) : hasDeclined ? (
-          <div className="space-y-8">
+          <div className="space-y-5">
             <div className="w-24 h-px bg-gradient-to-r from-transparent via-red-400 to-transparent mx-auto"></div>
             
-            <p className="text-center text-red-400 font-light mb-6">❌ You've declined this game</p>
+            <p className="text-center text-red-400 font-light mb-4">❌ You've declined this game</p>
             
             <div className="space-y-6">
               <h4 className="text-center text-sm font-light text-gray-500">Change your mind?</h4>
@@ -612,11 +612,11 @@ const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGam
 
         {/* Haven't Responded - Bottom Section */}
         {haventResponded.length > 0 && (
-          <div className="mt-16">
-            <div className="w-24 h-px bg-gradient-to-r from-transparent via-gray-600 to-transparent mx-auto mb-8"></div>
+          <div className="mt-10">
+            <div className="w-24 h-px bg-gradient-to-r from-transparent via-gray-600 to-transparent mx-auto mb-5"></div>
             
             <div>
-              <h4 className="text-center text-base font-semibold text-gray-400 mb-8">
+              <h4 className="text-center text-base font-semibold text-gray-400 mb-4">
                 ⏳ Haven't Responded (<AnimatedCounter value={haventResponded.length} className="font-bold" />)
               </h4>
               <div className="space-y-3">
