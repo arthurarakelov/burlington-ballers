@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { MapPin, Calendar, Users, CloudSun } from 'lucide-react';
+import { MapPin, Calendar } from 'lucide-react';
 import { convertTo24Hour, convertTo12Hour, formatDateWithDay } from '../../utils/dateUtils';
 import { LOCATIONS } from '../../constants/locations';
 import Button from '../ui/Button';
