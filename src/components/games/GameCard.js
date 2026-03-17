@@ -1,52 +1,49 @@
 import React from 'react';
 import { MapPin, Clock, Users } from 'lucide-react';
 import { formatDateWithDay } from '../../utils/dateUtils';
-import AnimatedCounter from '../ui/AnimatedCounter';
 import AnimatedWeatherIcon from '../ui/AnimatedWeatherIcon';
 
 const GameCard = ({ game, onClick, statusIcon }) => {
-  
+  const attendeeCount = game.attendees?.length || 0;
+  const maybeCount = game.maybe?.length || 0;
+
   return (
-    <div 
+    <div
       onClick={() => onClick(game)}
-      className="group cursor-pointer bg-gray-900/30 hover:bg-gray-800/60 backdrop-blur-sm border border-gray-800/50 hover:border-gray-600/80 rounded-xl p-4 sm:p-5 transition-all duration-300 active:scale-[0.98] sm:hover:scale-[1.02] sm:hover:shadow-2xl sm:hover:shadow-gray-900/20"
+      className="relative group cursor-pointer bg-white/[0.05] hover:bg-white/[0.08] rounded-2xl p-4 sm:p-5 transition-all duration-200 active:scale-[0.98]"
     >
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <h3 className="text-xl font-medium mb-3 text-gray-100 group-hover:text-white transition-colors duration-300 truncate">
+          <h3 className="text-[17px] font-semibold text-white mb-2 truncate">
             {game.title}
           </h3>
-          <div className="space-y-2.5">
-            <div className="flex items-center gap-3">
-              <MapPin className="w-4 h-4 text-gray-500 flex-shrink-0" />
-              <span className="text-sm text-gray-300 font-medium truncate">{game.location}</span>
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2.5">
+              <MapPin className="w-3.5 h-3.5 text-white/30 flex-shrink-0" />
+              <span className="text-sm text-white/60 truncate">{game.location}</span>
             </div>
-            <div className="flex items-center gap-3">
-              <Clock className="w-4 h-4 text-gray-500 flex-shrink-0" />
-              <span className="text-sm text-gray-400 font-light">{formatDateWithDay(game.date)} • {game.time}</span>
+            <div className="flex items-center gap-2.5">
+              <Clock className="w-3.5 h-3.5 text-white/30 flex-shrink-0" />
+              <span className="text-sm text-white/50">{formatDateWithDay(game.date)} · {game.time}</span>
             </div>
           </div>
         </div>
-        <div className="flex flex-col items-end gap-3 ml-4">
-          <div className="flex items-center gap-2 bg-gray-800/50 rounded-lg px-3 py-1.5">
-            <Users className="w-4 h-4 text-green-400" />
-            <AnimatedCounter value={game.attendees?.length || 0} className="text-sm font-semibold text-green-300" />
-            {game.maybe?.length > 0 && (
-              <>
-                <span className="text-gray-500">+</span>
-                <AnimatedCounter value={game.maybe.length} className="text-sm font-semibold text-yellow-400" />
-                <span className="text-xs text-gray-500">?</span>
-              </>
+
+        <div className="flex flex-col items-end gap-2 flex-shrink-0">
+          <div className="flex items-center gap-1.5 bg-white/[0.08] rounded-lg px-2.5 py-1.5">
+            <Users className="w-3.5 h-3.5 text-emerald-400" />
+            <span className="text-sm font-semibold text-emerald-400">{attendeeCount}</span>
+            {maybeCount > 0 && (
+              <span className="text-sm text-amber-400/80">+{maybeCount}</span>
             )}
           </div>
-          <div className="flex items-center gap-2 bg-gray-800/30 rounded-lg px-3 py-1.5">
-            <AnimatedWeatherIcon iconName={game.weather.icon} className="w-4 h-4" />
-            <span className="text-sm font-medium text-gray-300">{game.weather.temp}°</span>
+          <div className="flex items-center gap-1.5 px-2.5 py-1">
+            <AnimatedWeatherIcon iconName={game.weather.icon} className="w-3.5 h-3.5" />
+            <span className="text-xs text-white/40">{game.weather.temp}°</span>
           </div>
         </div>
       </div>
-      
-      {/* Status icon passed from parent */}
+
       {statusIcon}
     </div>
   );

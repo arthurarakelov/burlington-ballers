@@ -16,10 +16,7 @@ const Toast = ({ toast, onRemove }) => {
   const [isLeaving, setIsLeaving] = useState(false);
 
   useEffect(() => {
-    // Trigger enter animation
     const enterTimer = setTimeout(() => setIsVisible(true), 50);
-    
-    // Auto remove after duration
     const removeTimer = setTimeout(() => {
       setIsLeaving(true);
       setTimeout(() => onRemove(toast.id), 200);
@@ -36,53 +33,28 @@ const Toast = ({ toast, onRemove }) => {
     setTimeout(() => onRemove(toast.id), 200);
   };
 
-  const getIcon = () => {
-    switch (toast.type) {
-      case 'success':
-        return <CheckCircle className="w-5 h-5 text-green-400" />;
-      case 'error':
-        return <XCircle className="w-5 h-5 text-red-400" />;
-      case 'warning':
-        return <AlertCircle className="w-5 h-5 text-yellow-400" />;
-      default:
-        return <AlertCircle className="w-5 h-5 text-blue-400" />;
-    }
-  };
-
-  const getBorderColor = () => {
-    switch (toast.type) {
-      case 'success':
-        return 'border-green-400/30';
-      case 'error':
-        return 'border-red-400/30';
-      case 'warning':
-        return 'border-yellow-400/30';
-      default:
-        return 'border-blue-400/30';
-    }
+  const icons = {
+    success: <CheckCircle className="w-5 h-5 text-emerald-400" />,
+    error: <XCircle className="w-5 h-5 text-rose-400" />,
+    warning: <AlertCircle className="w-5 h-5 text-amber-400" />,
+    info: <AlertCircle className="w-5 h-5 text-blue-400" />,
   };
 
   return (
     <div
       className={`
-        flex items-center gap-3 p-4 mb-3 bg-gray-900/90 backdrop-blur-sm border rounded-lg
-        shadow-lg transition-all duration-200 ease-out
-        ${getBorderColor()}
-        ${isVisible && !isLeaving ? 'opacity-100 transform translate-x-0' : 'opacity-0 transform translate-x-full'}
-        ${isLeaving ? 'translate-x-full' : ''}
+        flex items-center gap-3 p-4 mb-2 rounded-2xl
+        bg-[#1c1c1e]/95 backdrop-blur-xl shadow-lg shadow-black/30
+        transition-all duration-200 ease-out
+        ${isVisible && !isLeaving ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'}
       `}
     >
-      {getIcon()}
-      <div className="flex-1">
-        {toast.title && (
-          <div className="font-medium text-white text-sm mb-1">{toast.title}</div>
-        )}
-        <div className="text-gray-300 text-sm">{toast.message}</div>
+      {icons[toast.type] || icons.info}
+      <div className="flex-1 min-w-0">
+        {toast.title && <p className="font-medium text-white text-sm">{toast.title}</p>}
+        <p className="text-white/60 text-sm">{toast.message}</p>
       </div>
-      <button
-        onClick={handleClose}
-        className="text-gray-400 hover:text-white transition-colors p-1"
-      >
+      <button onClick={handleClose} className="text-white/30 hover:text-white/60 transition-colors p-1 min-w-[28px] min-h-[28px] flex items-center justify-center">
         <X className="w-4 h-4" />
       </button>
     </div>
@@ -101,34 +73,17 @@ export const ToastProvider = ({ children }) => {
     setToasts(prev => prev.filter(toast => toast.id !== id));
   };
 
-  const showSuccess = (message, title) => {
-    addToast({ type: 'success', message, title });
-  };
-
-  const showError = (message, title) => {
-    addToast({ type: 'error', message, title });
-  };
-
-  const showWarning = (message, title) => {
-    addToast({ type: 'warning', message, title });
-  };
-
-  const showInfo = (message, title) => {
-    addToast({ type: 'info', message, title });
-  };
+  const showSuccess = (message, title) => addToast({ type: 'success', message, title });
+  const showError = (message, title) => addToast({ type: 'error', message, title });
+  const showWarning = (message, title) => addToast({ type: 'warning', message, title });
+  const showInfo = (message, title) => addToast({ type: 'info', message, title });
 
   return (
     <ToastContext.Provider value={{ showSuccess, showError, showWarning, showInfo }}>
       {children}
-      
-      {/* Toast Container */}
       <div className="fixed top-4 right-4 z-50 w-80 max-w-[calc(100vw-2rem)]">
         {toasts.map(toast => (
-          <Toast
-            key={toast.id}
-            toast={toast}
-            onRemove={removeToast}
-          />
+          <Toast key={toast.id} toast={toast} onRemove={removeToast} />
         ))}
       </div>
     </ToastContext.Provider>

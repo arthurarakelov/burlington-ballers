@@ -1,6 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { User, Mail, Bell, Save } from 'lucide-react';
 import Button from '../ui/Button';
+
+const Toggle = ({ checked, onChange }) => (
+  <label className="relative inline-flex items-center cursor-pointer">
+    <input type="checkbox" checked={checked} onChange={onChange} className="sr-only peer" />
+    <div className="w-[51px] h-[31px] bg-white/10 rounded-full peer peer-checked:bg-orange-500 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-[27px] after:w-[27px] after:transition-all peer-checked:after:translate-x-5"></div>
+  </label>
+);
+
+const SettingRow = ({ label, description, children }) => (
+  <div className="flex items-center justify-between py-3">
+    <div className="flex-1 mr-4">
+      <h3 className="text-[15px] text-white/80">{label}</h3>
+      {description && <p className="text-xs text-white/30 mt-0.5">{description}</p>}
+    </div>
+    {children}
+  </div>
+);
 
 const UserSettings = ({ user, onBack, onUpdateSettings, hideHeader }) => {
   const [username, setUsername] = useState(user?.username || user?.name || '');
@@ -23,41 +39,23 @@ const UserSettings = ({ user, onBack, onUpdateSettings, hideHeader }) => {
         gameChangeNotifications: user.emailPreferences.gameChangeNotifications ?? false
       });
     }
-    if (user?.wesMode !== undefined) {
-      setWesMode(user.wesMode);
-    }
+    if (user?.wesMode !== undefined) setWesMode(user.wesMode);
   }, [user?.emailPreferences, user?.wesMode]);
 
   const handleSaveSettings = async () => {
-    if (!username.trim()) {
-      setError('Username is required');
-      return;
-    }
-
-    if (username.trim().length < 2) {
-      setError('Username must be at least 2 characters');
-      return;
-    }
-
-    if (username.trim().length > 20) {
-      setError('Username must be 20 characters or less');
-      return;
-    }
-
-    if (!/^[a-zA-Z0-9\s\-_]+$/.test(username.trim())) {
-      setError('Username can only contain letters, numbers, spaces, hyphens, and underscores');
+    const trimmed = username.trim();
+    if (!trimmed) { setError('Username is required'); return; }
+    if (trimmed.length < 2) { setError('Username must be at least 2 characters'); return; }
+    if (trimmed.length > 20) { setError('Username must be 20 characters or less'); return; }
+    if (!/^[a-zA-Z0-9\s\-_]+$/.test(trimmed)) {
+      setError('Letters, numbers, spaces, hyphens, and underscores only');
       return;
     }
 
     setError('');
     setIsLoading(true);
-
     try {
-      await onUpdateSettings({
-        username: username.trim(),
-        emailPreferences,
-        wesMode
-      });
+      await onUpdateSettings({ username: trimmed, emailPreferences, wesMode });
     } catch (err) {
       setError('Failed to update settings. Please try again.');
     } finally {
@@ -66,146 +64,74 @@ const UserSettings = ({ user, onBack, onUpdateSettings, hideHeader }) => {
   };
 
   return (
-    <div className={hideHeader ? "" : "min-h-screen bg-black text-white relative overflow-hidden"}>
-      <div className="relative z-10">
-        <div className={hideHeader ? "" : "max-w-lg mx-auto px-4 sm:px-6 py-12"}>
+    <div className={hideHeader ? "" : "min-h-screen bg-[#09090b] text-white"}>
+      <div className={hideHeader ? "" : "max-w-lg mx-auto px-4 sm:px-6 py-12"}>
+        <div className="space-y-4 pt-4">
 
-          <div className="space-y-5 pt-4">
-            {/* Email Notifications Section */}
-            <div className="bg-gray-900/30 backdrop-blur-sm border border-gray-800 rounded-xl p-6">
-              <div className="flex items-center gap-3 mb-6">
-                <Mail className="w-5 h-5 text-green-400" />
-                <h2 className="text-lg font-medium text-white">Email Notifications</h2>
-              </div>
-
-              <div className="space-y-4">
-                <div className="flex items-center justify-between py-3">
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-200">RSVP Reminders</h3>
-                    <p className="text-xs text-gray-500">Remind me about games I haven't responded to</p>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={emailPreferences.rsvpReminders}
-                      onChange={(e) => setEmailPreferences(prev => ({
-                        ...prev,
-                        rsvpReminders: e.target.checked
-                      }))}
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                  </label>
-                </div>
-
-                <div className="flex items-center justify-between py-3">
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-200">Game Change Notifications</h3>
-                    <p className="text-xs text-gray-500">When games I've RSVPd to change (time/location)</p>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={emailPreferences.gameChangeNotifications}
-                      onChange={(e) => setEmailPreferences(prev => ({
-                        ...prev,
-                        gameChangeNotifications: e.target.checked
-                      }))}
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                  </label>
-                </div>
-              </div>
-
-              <div className="mt-6 p-4 bg-blue-900/20 border border-blue-800/50 rounded-lg">
-                <div className="flex items-start gap-3">
-                  <Bell className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="text-xs text-blue-300 font-medium">Email notifications use your Google email</p>
-                    <p className="text-xs text-blue-400/80 mt-1">
-                      We'll send notifications to {user?.email}
-                    </p>
-                  </div>
-                </div>
+          {/* Profile */}
+          <div className="bg-white/[0.05] rounded-2xl px-5 py-4">
+            <div className="flex items-center gap-4 mb-4">
+              {user?.photo ? (
+                <img src={user.photo} alt="Profile" className="w-12 h-12 rounded-full" />
+              ) : (
+                <div className="w-12 h-12 rounded-full bg-white/10" />
+              )}
+              <div>
+                <p className="text-sm text-white/60">Signed in with Google</p>
+                <p className="text-xs text-white/30">{user?.email}</p>
               </div>
             </div>
-
-            {/* Profile Section */}
-            <div className="bg-gray-900/30 backdrop-blur-sm border border-gray-800 rounded-xl p-6">
-              <div className="flex items-center gap-3 mb-6">
-                <User className="w-5 h-5 text-blue-400" />
-                <h2 className="text-lg font-medium text-white">Profile</h2>
-              </div>
-
-              <div className="space-y-4">
-                <div className="flex items-center gap-4 mb-4">
-                  {user?.photo && (
-                    <img
-                      src={user.photo}
-                      alt="Profile"
-                      className="w-12 h-12 rounded-full border-2 border-gray-700"
-                    />
-                  )}
-                  <div>
-                    <p className="text-sm text-gray-400">Signed in with Google</p>
-                    <p className="text-xs text-gray-500">{user?.email}</p>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-400 mb-3">
-                    Display Name
-                  </label>
-                  <input
-                    type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    placeholder="Enter your display name"
-                    className="w-full bg-gray-800/50 border border-gray-700 focus:border-blue-400 outline-none px-4 py-3 text-white rounded-lg transition-all duration-300"
-                    maxLength={20}
-                  />
-                  <p className="text-xs text-gray-500 mt-2">
-                    This name will be visible to other players
-                  </p>
-                </div>
-              </div>
+            <div>
+              <label className="block text-xs font-medium text-white/40 mb-2 uppercase tracking-wider">Display Name</label>
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Enter your display name"
+                className="w-full bg-white/[0.07] rounded-xl px-4 py-3 text-white placeholder-white/30 outline-none focus:ring-2 focus:ring-orange-500/40 transition-all"
+                maxLength={20}
+              />
+              <p className="text-xs text-white/20 mt-2">Visible to other players</p>
             </div>
-
-            {/* Wes Mode Section */}
-            <div className="bg-gray-900/30 backdrop-blur-sm border border-gray-800 rounded-xl p-6">
-              <div className="flex items-center justify-between py-3">
-                <div>
-                  <h3 className="text-sm font-medium text-gray-200">Wes Mode</h3>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={wesMode}
-                    onChange={(e) => setWesMode(e.target.checked)}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                </label>
-              </div>
-            </div>
-
-            {error && (
-              <div className="bg-red-900/20 border border-red-800/50 rounded-lg p-4">
-                <p className="text-red-400 text-sm">{error}</p>
-              </div>
-            )}
-
-            <Button
-              onClick={handleSaveSettings}
-              loading={isLoading}
-              className="w-full"
-              size="lg"
-            >
-              <Save className="w-4 h-4 mr-2" />
-              Save Settings
-            </Button>
           </div>
+
+          {/* Email Notifications */}
+          <div className="bg-white/[0.05] rounded-2xl px-5 py-2">
+            <SettingRow label="RSVP Reminders" description="Remind me about games I haven't responded to">
+              <Toggle
+                checked={emailPreferences.rsvpReminders}
+                onChange={(e) => setEmailPreferences(prev => ({ ...prev, rsvpReminders: e.target.checked }))}
+              />
+            </SettingRow>
+            <div className="h-px bg-white/[0.06]" />
+            <SettingRow label="Game Changes" description="When games I've RSVPd to change">
+              <Toggle
+                checked={emailPreferences.gameChangeNotifications}
+                onChange={(e) => setEmailPreferences(prev => ({ ...prev, gameChangeNotifications: e.target.checked }))}
+              />
+            </SettingRow>
+          </div>
+
+          <div className="bg-white/[0.04] rounded-2xl px-5 py-1">
+            <p className="text-xs text-white/30 py-3">Notifications sent to {user?.email}</p>
+          </div>
+
+          {/* Wes Mode */}
+          <div className="bg-white/[0.05] rounded-2xl px-5 py-2">
+            <SettingRow label="Wes Mode">
+              <Toggle checked={wesMode} onChange={(e) => setWesMode(e.target.checked)} />
+            </SettingRow>
+          </div>
+
+          {error && (
+            <div className="bg-rose-500/10 rounded-xl px-4 py-3">
+              <p className="text-rose-400 text-sm">{error}</p>
+            </div>
+          )}
+
+          <Button onClick={handleSaveSettings} loading={isLoading} className="w-full" size="lg">
+            Save Settings
+          </Button>
         </div>
       </div>
     </div>
