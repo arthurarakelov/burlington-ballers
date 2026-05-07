@@ -4,7 +4,7 @@ import Button from '../ui/Button';
 const Toggle = ({ checked, onChange }) => (
   <label className="relative inline-flex items-center cursor-pointer">
     <input type="checkbox" checked={checked} onChange={onChange} className="sr-only peer" />
-    <div className="w-[51px] h-[31px] bg-white/10 rounded-full peer peer-checked:bg-orange-500 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-[27px] after:w-[27px] after:transition-all peer-checked:after:translate-x-5"></div>
+    <div className="bb-toggle-track peer"></div>
   </label>
 );
 
@@ -64,17 +64,21 @@ const UserSettings = ({ user, onBack, onUpdateSettings, hideHeader }) => {
   };
 
   return (
-    <div className={hideHeader ? "" : "min-h-screen bg-[#09090b] text-white"}>
+    <div className={hideHeader ? "" : "bb-app-root min-h-screen text-white"}>
       <div className={hideHeader ? "" : "max-w-lg mx-auto px-4 sm:px-6 py-12"}>
-        <div className="space-y-4 pt-4">
+        <div className="mx-auto max-w-2xl space-y-4">
+          <div>
+            <p className="bb-kicker">Account</p>
+            <h2 className="text-2xl font-black text-white">Settings</h2>
+          </div>
 
           {/* Profile */}
-          <div className="bg-white/[0.05] rounded-2xl px-5 py-4">
+          <div className="bb-panel">
             <div className="flex items-center gap-4 mb-4">
               {user?.photo ? (
-                <img src={user.photo} alt="Profile" className="w-12 h-12 rounded-full" />
+                <img src={user.photo} alt="Profile" className="w-12 h-12 rounded-lg object-cover" />
               ) : (
-                <div className="w-12 h-12 rounded-full bg-white/10" />
+                <div className="w-12 h-12 rounded-lg bg-white/10" />
               )}
               <div>
                 <p className="text-sm text-white/60">Signed in with Google</p>
@@ -82,13 +86,13 @@ const UserSettings = ({ user, onBack, onUpdateSettings, hideHeader }) => {
               </div>
             </div>
             <div>
-              <label className="block text-xs font-medium text-white/40 mb-2 uppercase tracking-wider">Display Name</label>
+              <label className="bb-field-label">Display Name</label>
               <input
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="Enter your display name"
-                className="w-full bg-white/[0.07] rounded-xl px-4 py-3 text-white placeholder-white/30 outline-none focus:ring-2 focus:ring-orange-500/40 transition-all"
+                className="bb-input"
                 maxLength={20}
               />
               <p className="text-xs text-white/20 mt-2">Visible to other players</p>
@@ -96,7 +100,7 @@ const UserSettings = ({ user, onBack, onUpdateSettings, hideHeader }) => {
           </div>
 
           {/* Email Notifications */}
-          <div className="bg-white/[0.05] rounded-2xl px-5 py-2">
+          <div className="bb-panel py-2">
             <SettingRow label="RSVP Reminders" description="Remind me about games I haven't responded to">
               <Toggle
                 checked={emailPreferences.rsvpReminders}
@@ -112,20 +116,20 @@ const UserSettings = ({ user, onBack, onUpdateSettings, hideHeader }) => {
             </SettingRow>
           </div>
 
-          <div className="bg-white/[0.04] rounded-2xl px-5 py-1">
+          <div className="rounded-lg border border-white/10 bg-white/[0.04] px-5 py-1">
             <p className="text-xs text-white/30 py-3">Notifications sent to {user?.email}</p>
           </div>
 
           {/* Wes Mode */}
-          <div className="bg-white/[0.05] rounded-2xl px-5 py-2">
+          <div className="bb-panel py-2">
             <SettingRow label="Wes Mode">
               <Toggle checked={wesMode} onChange={(e) => setWesMode(e.target.checked)} />
             </SettingRow>
           </div>
 
           {error && (
-            <div className="bg-rose-500/10 rounded-xl px-4 py-3">
-              <p className="text-rose-400 text-sm">{error}</p>
+            <div className="rounded-lg border border-rose-400/20 bg-rose-500/10 px-4 py-3">
+              <p className="text-rose-200 text-sm">{error}</p>
             </div>
           )}
 

@@ -11,14 +11,17 @@ const Button = ({
   className = '',
   ...props
 }) => {
-  const base = 'inline-flex items-center justify-center gap-2 font-semibold rounded-xl transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#09090b] disabled:opacity-40 disabled:pointer-events-none touch-manipulation active:scale-[0.97]';
+  const base = 'bb-btn inline-flex items-center justify-center gap-2 font-semibold transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d1512] disabled:opacity-40 disabled:pointer-events-none touch-manipulation active:scale-[0.98]';
 
   const variants = {
-    primary: 'bg-orange-500 text-white hover:bg-orange-400',
-    secondary: 'bg-white/10 text-white hover:bg-white/[0.15]',
-    danger: 'bg-rose-500/15 text-rose-400 hover:bg-rose-500/25',
-    success: 'bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25',
-    ghost: 'bg-transparent text-white/60 hover:text-white hover:bg-white/10',
+    primary: 'bb-btn-primary',
+    default: 'bb-btn-primary',
+    secondary: 'bb-btn-secondary',
+    danger: 'bb-btn-danger',
+    success: 'bb-btn-success',
+    ghost: 'bb-btn-ghost',
+    nav: 'bb-btn-nav',
+    navActive: 'bb-btn-nav bb-btn-nav-active',
   };
 
   const sizes = {

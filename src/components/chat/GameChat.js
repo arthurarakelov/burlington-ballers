@@ -6,16 +6,16 @@ import { chatService } from '../../services/chatService';
 const ChatMessage = React.memo(({ message, formatTime }) => (
   <div className="flex items-start gap-3">
     {message.userPhoto ? (
-      <img src={message.userPhoto} alt={message.userName} className="w-8 h-8 rounded-full flex-shrink-0 mt-0.5" />
+      <img src={message.userPhoto} alt={message.userName} className="bb-player-avatar flex-shrink-0 mt-0.5" />
     ) : (
-      <div className="w-8 h-8 rounded-full bg-white/10 flex-shrink-0 mt-0.5" />
+      <div className="bb-player-avatar flex-shrink-0 mt-0.5" />
     )}
     <div className="flex-1 min-w-0">
       <div className="flex items-baseline gap-2 mb-1">
         <span className="text-sm font-medium text-white/80">{message.userName}</span>
         <span className="text-xs text-white/30">{formatTime(message.createdAt)}</span>
       </div>
-      <div className="bg-white/[0.06] rounded-2xl rounded-tl-md px-4 py-2.5">
+      <div className="bb-message-bubble px-4 py-2.5">
         <p className="text-[15px] text-white/90 whitespace-pre-wrap break-words">{message.message}</p>
       </div>
     </div>
@@ -78,7 +78,7 @@ const GameChat = ({ user, hideHeader }) => {
 
   if (loading) {
     return (
-      <div className={hideHeader ? "" : "min-h-screen bg-[#09090b] text-white"}>
+      <div className={hideHeader ? "" : "bb-app-root min-h-screen text-white"}>
         <div className="flex items-center justify-center py-20">
           <div className="text-center">
             <MessageCircle className="w-8 h-8 text-white/20 mx-auto mb-2 animate-pulse" />
@@ -90,17 +90,22 @@ const GameChat = ({ user, hideHeader }) => {
   }
 
   return (
-    <div className="space-y-4 pt-4">
+    <div className="mx-auto max-w-3xl space-y-4">
+      <div>
+        <p className="bb-kicker">Team chat</p>
+        <h2 className="text-2xl font-black text-white">Messages</h2>
+      </div>
+
       {/* Message Input */}
       {user && (
-        <div className="bg-white/[0.05] rounded-2xl p-4">
+        <div className="bb-panel">
           <div className="flex gap-3 items-center">
             <textarea
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Type a message..."
-              className="flex-1 bg-white/[0.07] rounded-xl px-4 py-3 text-white placeholder-white/30 outline-none focus:ring-2 focus:ring-orange-500/40 resize-none transition-all"
+              className="bb-textarea flex-1"
               rows="1"
               maxLength={500}
               disabled={sending}

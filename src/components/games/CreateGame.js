@@ -67,49 +67,53 @@ const CreateGame = ({ onBack, onCreateGame, hideHeader }) => {
   };
 
   return (
-    <div className={hideHeader ? "" : "min-h-screen bg-[#09090b] text-white"}>
+    <div className={hideHeader ? "" : "bb-app-root min-h-screen text-white"}>
       <div className={hideHeader ? "" : "max-w-lg mx-auto px-4 sm:px-6 py-12"}>
-        <div className="space-y-5 pt-4">
-          <div className="bg-white/[0.05] rounded-2xl p-5 space-y-5">
+        <div className="mx-auto max-w-2xl space-y-5">
+          <div className="bb-panel space-y-5">
             <div>
-              <label className="block text-xs font-medium text-white/40 mb-2 uppercase tracking-wider">Location</label>
+              <p className="bb-kicker">New run</p>
+              <h2 className="text-2xl font-black text-white">Create Game</h2>
+            </div>
+            <div>
+              <label className="bb-field-label">Location</label>
               <select
                 value={newGame.location}
                 onChange={(e) => setNewGame({...newGame, location: e.target.value})}
-                className="w-full bg-white/[0.07] rounded-xl px-4 py-3 text-white outline-none focus:ring-2 focus:ring-orange-500/40 transition-all"
+                className="bb-select"
               >
-                <option value="" className="bg-[#18181b]">Select location</option>
+                <option value="" className="bg-[#182621]">Select location</option>
                 {LOCATIONS.map(loc => (
-                  <option key={loc.value} value={loc.value} className="bg-[#18181b]">{loc.value}</option>
+                  <option key={loc.value} value={loc.value} className="bg-[#182621]">{loc.value}</option>
                 ))}
               </select>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
-                <label className="block text-xs font-medium text-white/40 mb-2 uppercase tracking-wider">Date</label>
+                <label className="bb-field-label">Date</label>
                 <input
                   type="date"
                   value={newGame.date}
                   onChange={handleDateChange}
                   min={getTodayDate()}
                   max={getMaxDate()}
-                  className="w-full bg-white/[0.07] rounded-xl px-4 py-3 text-white outline-none focus:ring-2 focus:ring-orange-500/40 transition-all"
+                  className="bb-input"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-white/40 mb-2 uppercase tracking-wider">Time</label>
+                <label className="bb-field-label">Time</label>
                 <input
                   type="time"
                   value={newGame.time}
                   onChange={(e) => setNewGame({...newGame, time: e.target.value})}
-                  className="w-full bg-white/[0.07] rounded-xl px-4 py-3 text-white outline-none focus:ring-2 focus:ring-orange-500/40 transition-all"
+                  className="bb-input"
                 />
               </div>
             </div>
 
             {dateError && (
-              <p className="text-center text-rose-400 text-sm">{dateError}</p>
+              <p className="rounded-lg border border-rose-400/20 bg-rose-500/10 px-4 py-3 text-center text-rose-200 text-sm">{dateError}</p>
             )}
           </div>
 

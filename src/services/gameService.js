@@ -13,11 +13,15 @@ import {
   serverTimestamp 
 } from 'firebase/firestore';
 import { db } from './firebase';
-import { isGameInPast } from '../utils/dateUtils';
+import { compareGamesByStartTime, isGameCompleted, shouldAutoDeleteGame } from '../utils/dateUtils';
 
 // Games collection reference
 const gamesRef = collection(db, 'games');
 const rsvpsRef = collection(db, 'rsvps');
+
+const isPermissionError = (error) =>
+  error?.code === 'permission-denied' ||
+  String(error?.message || '').toLowerCase().includes('permission');
 
 export const gameService = {
   // Create a new game
@@ -62,7 +66,15 @@ export const gameService = {
       const rsvpsQuery = query(rsvpsRef, where('gameId', '==', gameId));
       const rsvpsSnapshot = await getDocs(rsvpsQuery);
       
-      const deletePromises = rsvpsSnapshot.docs.map(doc => deleteDoc(doc.ref));
+      const deletePromises = rsvpsSnapshot.docs.map(rsvpDoc =>
+        deleteDoc(rsvpDoc.ref).catch(error => {
+          if (isPermissionError(error)) {
+            console.warn('Skipping RSVP cleanup due to permissions:', rsvpDoc.id);
+            return null;
+          }
+          throw error;
+        })
+      );
       await Promise.all(deletePromises);
       
       // Then delete the game
@@ -134,6 +146,10 @@ export const gameService = {
       
       for (const doc of snapshot.docs) {
         let gameData = { id: doc.id, ...doc.data() };
+
+        if (isGameCompleted(gameData.date, gameData.time)) {
+          continue;
+        }
         
         // Get RSVPs for this game
         const rsvps = await this.getGameRSVPs(doc.id);
@@ -153,7 +169,7 @@ export const gameService = {
         games.push(gameData);
       }
       
-      return games;
+      return games.sort(compareGamesByStartTime);
     } catch (error) {
       console.error('Error fetching games:', error);
       throw error;
@@ -170,6 +186,10 @@ export const gameService = {
         
         for (const doc of snapshot.docs) {
           let gameData = { id: doc.id, ...doc.data() };
+
+          if (isGameCompleted(gameData.date, gameData.time)) {
+            continue;
+          }
           
           // Get RSVPs for this game
           const rsvps = await this.getGameRSVPs(doc.id);
@@ -189,7 +209,7 @@ export const gameService = {
           games.push(gameData);
         }
         
-        callback(games);
+        callback(games.sort(compareGamesByStartTime));
       } catch (error) {
         console.error('Error processing games:', error);
         if (errorCallback) errorCallback(error);
@@ -298,28 +318,52 @@ export const gameService = {
     }
   },
 
-  // Delete past games automatically
-  async deletePastGames() {
+  // Delete completed games after the grace period.
+  async deletePastGames(user = null) {
     try {
       const snapshot = await getDocs(gamesRef);
       const pastGames = [];
 
       for (const doc of snapshot.docs) {
         const gameData = doc.data();
-        if (isGameInPast(gameData.date, gameData.time)) {
+        if (shouldAutoDeleteGame(gameData.date, gameData.time)) {
           pastGames.push({ id: doc.id, ...gameData });
         }
       }
 
+      let deletedCount = 0;
+
       for (const game of pastGames) {
-        const rsvpsQuery = query(rsvpsRef, where('gameId', '==', game.id));
-        const rsvpsSnapshot = await getDocs(rsvpsQuery);
-        const deletePromises = rsvpsSnapshot.docs.map(doc => deleteDoc(doc.ref));
-        await Promise.all(deletePromises);
-        await deleteDoc(doc(db, 'games', game.id));
+        if (user?.uid && game.organizerUid !== user.uid) {
+          continue;
+        }
+
+        try {
+          const rsvpsQuery = query(rsvpsRef, where('gameId', '==', game.id));
+          const rsvpsSnapshot = await getDocs(rsvpsQuery);
+          const deletePromises = rsvpsSnapshot.docs.map(rsvpDoc =>
+            deleteDoc(doc(db, 'rsvps', rsvpDoc.id)).catch(error => {
+              if (isPermissionError(error)) {
+                console.warn('Skipping RSVP cleanup due to permissions:', rsvpDoc.id);
+                return null;
+              }
+              throw error;
+            })
+          );
+
+          await Promise.all(deletePromises);
+          await deleteDoc(doc(db, 'games', game.id));
+          deletedCount += 1;
+        } catch (error) {
+          if (isPermissionError(error)) {
+            console.warn('Skipping old game cleanup due to permissions:', game.id);
+            continue;
+          }
+          throw error;
+        }
       }
 
-      return pastGames.length;
+      return deletedCount;
     } catch (error) {
       console.error('Error deleting past games:', error);
       throw error;

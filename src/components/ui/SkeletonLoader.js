@@ -4,7 +4,7 @@ const SkeletonLoader = ({ className = '', width = 'w-full', height = 'h-4' }) =>
   <div
     className={`${width} ${height} rounded-lg ${className}`}
     style={{
-      background: 'linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%)',
+      background: 'linear-gradient(90deg, rgba(248,243,231,0.05) 25%, rgba(248,243,231,0.12) 50%, rgba(248,243,231,0.05) 75%)',
       backgroundSize: '200% 100%',
       animation: 'shimmer 1.5s infinite'
     }}
@@ -12,7 +12,7 @@ const SkeletonLoader = ({ className = '', width = 'w-full', height = 'h-4' }) =>
 );
 
 const GameCardSkeleton = () => (
-  <div className="bg-white/[0.05] rounded-2xl p-4 sm:p-5 space-y-3">
+  <div className="bb-game-card space-y-4">
     <div className="flex items-start justify-between">
       <div className="flex-1 space-y-2">
         <SkeletonLoader width="w-36" height="h-5" />
@@ -37,7 +37,7 @@ const GameDetailsSkeleton = () => (
         <SkeletonLoader width="w-32" height="h-4" className="mx-auto" />
       </div>
     </div>
-    <div className="bg-white/[0.04] rounded-2xl p-4 space-y-3">
+    <div className="bb-roster-section space-y-3">
       <SkeletonLoader width="w-24" height="h-4" />
       {[1, 2, 3].map(i => (
         <div key={i} className="flex items-center justify-between py-2">
@@ -49,7 +49,7 @@ const GameDetailsSkeleton = () => (
         </div>
       ))}
     </div>
-    <div className="bg-white/[0.05] rounded-2xl p-5">
+    <div className="bb-action-panel">
       <SkeletonLoader width="w-full" height="h-11" className="rounded-xl" />
     </div>
   </div>

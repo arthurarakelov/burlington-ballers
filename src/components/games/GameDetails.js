@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { MapPin, Calendar } from 'lucide-react';
+import { Calendar, Clock, MapPin } from 'lucide-react';
 import { convertTo24Hour, convertTo12Hour, formatDateWithDay } from '../../utils/dateUtils';
 import { LOCATIONS } from '../../constants/locations';
 import Button from '../ui/Button';
@@ -8,23 +8,25 @@ import AnimatedCounter from '../ui/AnimatedCounter';
 import AnimatedWeatherIcon from '../ui/AnimatedWeatherIcon';
 
 const SectionLabel = ({ color, children }) => (
-  <div className="flex items-center gap-2 mb-3">
-    <div className={`w-2 h-2 rounded-full ${color}`}></div>
-    <h4 className="text-sm font-semibold text-white/70 uppercase tracking-wide">{children}</h4>
+  <div className="mb-2 flex items-center justify-between gap-3">
+    <div className="flex items-center gap-2">
+      <div className={`h-2 w-2 rounded-full ${color}`} />
+      <h4 className="text-sm font-extrabold text-white/75">{children}</h4>
+    </div>
   </div>
 );
 
 const PlayerRow = ({ photo, name, detail, muted }) => (
-  <div className="flex items-center justify-between py-3">
-    <div className="flex items-center gap-3">
+  <div className="bb-player-row">
+    <div className="flex min-w-0 items-center gap-3">
       {photo ? (
-        <img src={photo} alt={name} className={`w-8 h-8 rounded-full ${muted ? 'opacity-50' : ''}`} />
+        <img src={photo} alt={name} className={`bb-player-avatar ${muted ? 'opacity-50' : ''}`} />
       ) : (
-        <div className={`w-8 h-8 rounded-full bg-white/10 ${muted ? 'opacity-50' : ''}`} />
+        <div className={`bb-player-avatar ${muted ? 'opacity-50' : ''}`} />
       )}
-      <span className={`text-[15px] ${muted ? 'text-white/30' : 'text-white/80'}`}>{name}</span>
+      <span className={`truncate text-[15px] ${muted ? 'text-white/34' : 'text-white/84'}`}>{name}</span>
     </div>
-    {detail && <span className="text-sm text-white/40">{detail}</span>}
+    {detail && <span className="flex-shrink-0 text-sm text-white/45">{detail}</span>}
   </div>
 );
 
@@ -111,7 +113,7 @@ const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGam
 
   const renderTimePicker = (prompt, extraButtons) => (
     <div className="space-y-4">
-      {prompt && <p className="text-center text-sm text-white/40">{prompt}</p>}
+      {prompt && <p className="text-center text-sm text-white/50">{prompt}</p>}
       <TimePicker value={arrivalTime} onChange={setArrivalTime} />
       <div className="space-y-2.5">
         <Button onClick={handleJoinGame} disabled={!arrivalTime} loading={loadingStates.joining} className="w-full">
@@ -125,104 +127,116 @@ const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGam
     </div>
   );
 
-  return (
-    <div className={hideHeader ? "" : "min-h-screen bg-[#09090b] text-white"}>
-      <div className={hideHeader ? "" : "max-w-lg mx-auto px-4 sm:px-6 py-12"}>
+  const rosterSections = [
+    {
+      key: 'attending',
+      color: 'bg-emerald-300',
+      label: 'Attending',
+      count: attending.length,
+      rows: attending,
+      render: (a, i) => <PlayerRow key={i} photo={a.userPhoto} name={a.userName || a.name} detail={a.arrivalTime} />
+    },
+    {
+      key: 'maybe',
+      color: 'bg-amber-300',
+      label: 'Maybe',
+      count: maybe.length,
+      rows: maybe,
+      render: (m, i) => <PlayerRow key={i} photo={m.userPhoto} name={m.userName} />
+    },
+    {
+      key: 'declined',
+      color: 'bg-rose-300',
+      label: "Can't Make It",
+      count: declined.length,
+      rows: declined,
+      render: (d, i) => <PlayerRow key={i} photo={d.userPhoto} name={d.userName} muted />
+    },
+    {
+      key: 'open',
+      color: 'bg-white/35',
+      label: 'No Response',
+      count: haventResponded.length,
+      rows: haventResponded,
+      render: (u, i) => {
+        const name = u.username || u.googleName || u.name || 'Unknown';
+        return <PlayerRow key={i} photo={u.photoURL || u.photo} name={name} muted />;
+      }
+    }
+  ];
 
-        {/* Game info header */}
-        <div className="text-center mb-6 pt-2">
-          <h3 className="text-2xl sm:text-[28px] font-bold text-white mb-4 leading-tight">{game.title}</h3>
+  return (
+    <div className={hideHeader ? "" : "bb-app-root min-h-screen text-white"}>
+      <div className={hideHeader ? "" : "max-w-lg mx-auto px-4 sm:px-6 py-12"}>
+        <section className="bb-detail-hero">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p className="bb-kicker">Game plan</p>
+              <h2 className="text-3xl font-black leading-tight text-white sm:text-4xl">{game.title}</h2>
+              <p className="mt-2 text-sm text-white/45">Organized by {game.organizerName || game.organizer}</p>
+            </div>
+            <div className="bb-pill bb-pill-accent self-start">
+              <AnimatedWeatherIcon iconName={game.weather?.icon || 'Sun'} className="h-4 w-4" />
+              <span>{game.weather?.temp || '--'}° {game.weather?.condition || ''}</span>
+            </div>
+          </div>
 
           {isEditingGame ? (
-            <div className="bg-white/[0.05] rounded-2xl p-5 space-y-4 text-left">
-              <p className="text-sm font-semibold text-white/60 text-center">Edit Game</p>
+            <div className="mt-5 space-y-4 rounded-lg border border-white/10 bg-black/18 p-4">
               <div>
-                <label className="block text-xs font-medium text-white/40 mb-2 uppercase tracking-wider">Location</label>
+                <label className="bb-field-label">Location</label>
                 <select value={editLocation} onChange={e => setEditLocation(e.target.value)}
-                  className="w-full bg-white/[0.07] rounded-xl px-4 py-3 text-white outline-none focus:ring-2 focus:ring-orange-500/40 transition-all">
-                  <option value="" className="bg-[#18181b]">Select location</option>
-                  {LOCATIONS.map(l => <option key={l.value} value={l.value} className="bg-[#18181b]">{l.value}</option>)}
+                  className="bb-select">
+                  <option value="" className="bg-[#182621]">Select location</option>
+                  {LOCATIONS.map(l => <option key={l.value} value={l.value} className="bg-[#182621]">{l.value}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium text-white/40 mb-2 uppercase tracking-wider">Time</label>
+                <label className="bb-field-label">Time</label>
                 <input type="time" value={editTime} onChange={e => setEditTime(e.target.value)}
-                  className="w-full bg-white/[0.07] rounded-xl px-4 py-3 text-white outline-none focus:ring-2 focus:ring-orange-500/40 transition-all" />
+                  className="bb-input" />
               </div>
-              <div className="flex gap-2.5 pt-2">
-                <Button onClick={() => { setIsEditingGame(false); setEditLocation(''); setEditTime(''); }} variant="secondary" className="flex-1">Cancel</Button>
-                <Button onClick={handleSaveGame} disabled={!editLocation || !editTime} loading={loadingStates.saving} className="flex-1">Save</Button>
+              <div className="grid grid-cols-2 gap-2.5 pt-2">
+                <Button onClick={() => { setIsEditingGame(false); setEditLocation(''); setEditTime(''); }} variant="secondary">Cancel</Button>
+                <Button onClick={handleSaveGame} disabled={!editLocation || !editTime} loading={loadingStates.saving}>Save</Button>
               </div>
               <Button onClick={handleDeleteGame} variant="danger" loading={loadingStates.deleting} className="w-full">Delete Game</Button>
             </div>
           ) : (
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-center gap-2 text-white/50">
-                <MapPin className="w-4 h-4 text-white/30" />
-                <span className="text-[15px]">{game.location}</span>
+            <div className="bb-detail-meta">
+              <div className="bb-detail-meta-item">
+                <MapPin className="h-4 w-4 text-orange-200" />
+                <span className="truncate">{game.location}</span>
               </div>
-              <div className="flex items-center justify-center gap-2 text-white/50">
-                <Calendar className="w-4 h-4 text-white/30" />
-                <span className="text-[15px]">{formatDateWithDay(game.date)} · {game.time}</span>
+              <div className="bb-detail-meta-item">
+                <Calendar className="h-4 w-4 text-teal-200" />
+                <span>{formatDateWithDay(game.date)}</span>
               </div>
-              <div className="flex items-center justify-center gap-2 text-white/50">
-                <AnimatedWeatherIcon iconName={game.weather.icon} className="w-4 h-4" />
-                <span className="text-[15px]">{game.weather.temp}° {game.weather.condition}</span>
-              </div>
-              <p className="text-xs text-white/30 pt-1">by {game.organizerName || game.organizer}</p>
-            </div>
-          )}
-        </div>
-
-        {/* RSVP Lists */}
-        <div className="space-y-5 mb-8">
-          {attending.length > 0 && (
-            <div className="bg-white/[0.04] rounded-2xl px-4 py-3">
-              <SectionLabel color="bg-emerald-400">Attending · <AnimatedCounter value={attending.length} /></SectionLabel>
-              <div className="divide-y divide-white/[0.06]">
-                {attending.map((a, i) => (
-                  <PlayerRow key={i} photo={a.userPhoto} name={a.userName || a.name} detail={a.arrivalTime} />
-                ))}
+              <div className="bb-detail-meta-item">
+                <Clock className="h-4 w-4 text-amber-200" />
+                <span>{game.time}</span>
               </div>
             </div>
           )}
+        </section>
 
-          {maybe.length > 0 && (
-            <div className="bg-white/[0.04] rounded-2xl px-4 py-3">
-              <SectionLabel color="bg-amber-400">Maybe · <AnimatedCounter value={maybe.length} /></SectionLabel>
-              <div className="divide-y divide-white/[0.06]">
-                {maybe.map((m, i) => <PlayerRow key={i} photo={m.userPhoto} name={m.userName} />)}
+        <section className="bb-roster-grid">
+          {rosterSections.filter(section => section.count > 0).map(section => (
+            <div key={section.key} className="bb-roster-section">
+              <SectionLabel color={section.color}>
+                {section.label} · <AnimatedCounter value={section.count} />
+              </SectionLabel>
+              <div className="divide-y divide-white/[0.07]">
+                {section.rows.map(section.render)}
               </div>
             </div>
-          )}
+          ))}
+        </section>
 
-          {declined.length > 0 && (
-            <div className="bg-white/[0.04] rounded-2xl px-4 py-3">
-              <SectionLabel color="bg-rose-400">Can't Make It · <AnimatedCounter value={declined.length} /></SectionLabel>
-              <div className="divide-y divide-white/[0.06]">
-                {declined.map((d, i) => <PlayerRow key={i} photo={d.userPhoto} name={d.userName} muted />)}
-              </div>
-            </div>
-          )}
-
-          {haventResponded.length > 0 && (
-            <div className="bg-white/[0.03] rounded-2xl px-4 py-3">
-              <SectionLabel color="bg-white/30">No Response · <AnimatedCounter value={haventResponded.length} /></SectionLabel>
-              <div className="divide-y divide-white/[0.06]">
-                {haventResponded.map((u, i) => {
-                  const name = u.username || u.googleName || u.name || 'Unknown';
-                  return <PlayerRow key={i} photo={u.photoURL || u.photo} name={name} muted />;
-                })}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* RSVP Actions */}
-        <div className="bg-white/[0.05] rounded-2xl p-5">
+        <section className="bb-action-panel">
           {hasntResponded ? (
             <div className="space-y-4">
-              <p className="text-center text-sm font-semibold text-white/60">When will you arrive?</p>
+              <p className="text-center text-sm font-semibold text-white/70">When will you arrive?</p>
               {renderTimePicker(null, (
                 <div className="grid grid-cols-2 gap-2.5">
                   <Button onClick={handleMaybeGame} variant="secondary" loading={loadingStates.maybe}>Maybe</Button>
@@ -233,20 +247,21 @@ const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGam
           ) : isAttending ? (
             <div className="space-y-4">
               <div className="flex items-center justify-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-emerald-400"></div>
-                <p className="text-sm font-semibold text-emerald-400">You're attending</p>
+                <div className="h-2 w-2 rounded-full bg-emerald-300" />
+                <p className="text-sm font-semibold text-emerald-200">You're attending</p>
               </div>
-              <div className="grid grid-cols-2 gap-2.5">
+              <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                 <Button onClick={handleMaybeGame} variant="secondary" loading={loadingStates.maybe}>Change to Maybe</Button>
                 <Button onClick={handleDeclineGame} variant="secondary" loading={loadingStates.declining}>Can't make it</Button>
               </div>
+              <Button onClick={withLoading('leaving', () => onLeaveGame(game.id))} variant="secondary" loading={loadingStates.leaving} className="w-full">Leave Game</Button>
               {isOrganizer && <Button onClick={handleEditGame} variant="secondary" className="w-full">Edit Game</Button>}
             </div>
           ) : hasMaybe ? (
             <div className="space-y-4">
               <div className="flex items-center justify-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-amber-400"></div>
-                <p className="text-sm font-semibold text-amber-400">You might attend</p>
+                <div className="h-2 w-2 rounded-full bg-amber-300" />
+                <p className="text-sm font-semibold text-amber-200">You might attend</p>
               </div>
               {renderTimePicker('Ready to commit?', (
                 <Button onClick={handleDeclineGame} variant="secondary" loading={loadingStates.declining} className="w-full">Can't make it</Button>
@@ -255,16 +270,15 @@ const GameDetails = ({ game, user, onBack, onJoinGame, onLeaveGame, onDeclineGam
           ) : hasDeclined ? (
             <div className="space-y-4">
               <div className="flex items-center justify-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-rose-400"></div>
-                <p className="text-sm font-semibold text-rose-400">You've declined</p>
+                <div className="h-2 w-2 rounded-full bg-rose-300" />
+                <p className="text-sm font-semibold text-rose-200">You've declined</p>
               </div>
               {renderTimePicker('Change your mind?', (
                 <Button onClick={handleMaybeGame} variant="secondary" loading={loadingStates.maybe} className="w-full">Maybe</Button>
               ))}
             </div>
           ) : null}
-        </div>
-
+        </section>
       </div>
     </div>
   );

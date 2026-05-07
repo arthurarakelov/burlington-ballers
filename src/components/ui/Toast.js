@@ -43,8 +43,8 @@ const Toast = ({ toast, onRemove }) => {
   return (
     <div
       className={`
-        flex items-center gap-3 p-4 mb-2 rounded-2xl
-        bg-[#1c1c1e]/95 backdrop-blur-xl shadow-lg shadow-black/30
+        flex items-center gap-3 p-4 mb-2 rounded-lg border border-white/10
+        bg-[#14211d]/95 backdrop-blur-xl shadow-lg shadow-black/30
         transition-all duration-200 ease-out
         ${isVisible && !isLeaving ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'}
       `}

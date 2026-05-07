@@ -3,6 +3,12 @@
   "name": "Burlington Ballers",
   "icons": [
     {
+      "src": "ballers-logo.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any maskable"
+    },
+    {
       "src": "favicon.ico",
       "sizes": "64x64",
       "type": "image/x-icon"
@@ -20,6 +26,6 @@
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#000000"
+  "theme_color": "#0d1512",
+  "background_color": "#0d1512"
 }

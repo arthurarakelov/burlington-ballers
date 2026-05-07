@@ -6,6 +6,7 @@ import {
   serverTimestamp 
 } from 'firebase/firestore';
 import { db } from './firebase';
+import { parseGameDateTime } from '../utils/dateUtils';
 
 // Burlington, MA coordinates
 const BURLINGTON_LAT = 42.5047;
@@ -58,7 +59,11 @@ export const weatherService = {
 
   // Fetch weather from OpenWeatherMap API
   async fetchWeatherFromAPI(gameDate, gameTime) {
-    const gameDateTime = new Date(`${gameDate} ${gameTime}`);
+    const gameDateTime = parseGameDateTime(gameDate, gameTime);
+    if (!gameDateTime) {
+      return { temp: 75, condition: "TBD", icon: "Sun" };
+    }
+
     const now = new Date();
     const hoursDiff = (gameDateTime - now) / (1000 * 60 * 60);
 

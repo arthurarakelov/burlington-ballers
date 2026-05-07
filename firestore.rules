@@ -30,9 +30,19 @@ service cloud.firestore {
       allow create: if request.auth != null
         && request.auth.uid == request.resource.data.userUid;
 
-      // Users can only update/delete their own RSVPs
-      allow update, delete: if request.auth != null
+      // Users can update/delete their own RSVPs
+      allow update: if request.auth != null
         && request.auth.uid == resource.data.userUid;
+
+      // Users can delete their own RSVPs; organizers can clean up RSVPs for their games
+      allow delete: if request.auth != null
+        && (
+          request.auth.uid == resource.data.userUid ||
+          (
+            exists(/databases/$(database)/documents/games/$(resource.data.gameId)) &&
+            get(/databases/$(database)/documents/games/$(resource.data.gameId)).data.organizerUid == request.auth.uid
+          )
+        );
     }
 
     // Chat: Authenticated users can read and post messages

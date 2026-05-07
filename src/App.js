@@ -11,8 +11,6 @@ import WesMode from './components/ui/WesMode';
 import { ToastProvider, useToast } from './components/ui/Toast';
 import { convertTo12Hour } from './utils/dateUtils';
 import { useAuth } from './hooks/useAuth';
-import { useMouseTracking } from './hooks/useMouseTracking';
-import FloatingOrbs from './components/ui/FloatingOrbs';
 import Button from './components/ui/Button';
 import { gameService } from './services/gameService';
 import { notificationScheduler } from './services/notificationScheduler';
@@ -20,7 +18,6 @@ import './App.css';
 
 const BasketballSchedulerContent = () => {
   const { user, loading: authLoading, setUsername } = useAuth();
-  const mousePosition = useMouseTracking();
   const toast = useToast();
   const [currentView, setCurrentView] = useState('games');
   const [selectedEvent, setSelectedEvent] = useState(null);
@@ -35,14 +32,19 @@ const BasketballSchedulerContent = () => {
     return () => notificationScheduler.stop();
   }, []);
 
-  // Subscribe to games (works for both authenticated and unauthenticated users)
+  // Subscribe to game data after sign-in; Firestore rules require auth.
   useEffect(() => {
     setLoading(true);
     setGames([]);
 
+    if (!user) {
+      setLoading(false);
+      return undefined;
+    }
+
     const initializeGames = async () => {
       try {
-        await gameService.deletePastGames();
+        await gameService.deletePastGames(user);
         const { chatService } = await import('./services/chatService');
         await chatService.cleanupOldMessages();
       } catch (error) {
@@ -347,7 +349,8 @@ const BasketballSchedulerContent = () => {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-[#09090b] text-white flex items-center justify-center">
+      <div className="bb-app-root text-white flex items-center justify-center">
+        <div className="bb-court-lines" />
         <div className="text-center">
           <div className="relative w-10 h-10 mx-auto mb-4">
             <div className="absolute inset-0 border-[3px] border-white/10 rounded-full"></div>
@@ -446,12 +449,22 @@ const BasketballSchedulerContent = () => {
   const getHeaderContent = () => {
     const isGamesView = currentView === 'games' && !selectedEvent;
     const isGameDetails = !!selectedEvent;
+    const viewLabel = isGameDetails
+      ? 'Game plan'
+      : currentView === 'create'
+        ? 'Create'
+        : currentView === 'chat'
+          ? 'Team chat'
+          : currentView === 'settings'
+            ? 'Settings'
+            : 'Schedule';
 
     return {
       title: 'Burlington Ballers',
       subtitle: user?.name,
+      viewLabel,
       rightContent: (
-        <div className="flex items-center gap-1">
+        <div className="bb-nav-actions">
           <Button
             onClick={() => {
               if (isGameDetails) {
@@ -460,27 +473,30 @@ const BasketballSchedulerContent = () => {
                 transitionToView('games');
               }
             }}
-            variant="ghost"
+            variant="nav"
             size="sm"
             disabled={isGamesView}
+            aria-label="Back"
           >
             <ArrowLeft className="w-5 h-5" />
           </Button>
 
           <Button
             onClick={() => transitionToView('chat')}
-            variant={currentView === 'chat' ? 'default' : 'ghost'}
+            variant={currentView === 'chat' ? 'navActive' : 'nav'}
             size="sm"
             disabled={currentView === 'chat'}
+            aria-label="Team chat"
           >
             <MessageCircle className="w-5 h-5" />
           </Button>
 
           <Button
             onClick={() => transitionToView('settings')}
-            variant={currentView === 'settings' ? 'default' : 'ghost'}
+            variant={currentView === 'settings' ? 'navActive' : 'nav'}
             size="sm"
             disabled={currentView === 'settings'}
+            aria-label="Settings"
           >
             <Settings className="w-5 h-5" />
           </Button>
@@ -493,35 +509,33 @@ const BasketballSchedulerContent = () => {
 
   return (
     <WesMode user={user}>
-      <div className="min-h-screen bg-[#09090b] text-white relative overflow-hidden">
-        <FloatingOrbs mousePosition={mousePosition} />
+      <div className="bb-app-root text-white">
+        <div className="bb-court-lines" />
 
         <div className="relative z-10">
-          <div className="max-w-lg mx-auto px-4 sm:px-6 pb-20 safe-bottom">
-            {/* Frosted glass nav bar */}
-            <div className="fixed top-0 left-0 right-0 z-30 safe-top" style={{ WebkitBackdropFilter: 'blur(40px) saturate(180%)', backdropFilter: 'blur(40px) saturate(180%)', backgroundColor: 'rgba(9,9,11,0.72)' }}>
-              <div className="max-w-lg mx-auto px-4 sm:px-6 py-3">
-                <div className="flex items-center justify-between">
-                  <div className="min-w-0">
-                    <h1 className="text-[17px] font-semibold text-white truncate">
-                      {headerContent.title}
-                    </h1>
-                    <p className="text-xs text-white/40 truncate">{headerContent.subtitle}</p>
+          <header className="bb-topbar safe-top">
+            <div className="bb-shell">
+              <div className="bb-nav">
+                <div className="bb-brand">
+                  <div className="bb-brand-mark">
+                    <img src="/ballers-logo.svg" alt="" />
                   </div>
-                  <div className="flex-shrink-0">
-                    {headerContent.rightContent}
+                  <div className="min-w-0">
+                    <p className="bb-kicker truncate">{headerContent.viewLabel}</p>
+                    <h1 className="bb-title truncate">{headerContent.title}</h1>
+                    <p className="bb-subtitle truncate">{headerContent.subtitle}</p>
                   </div>
                 </div>
+                {headerContent.rightContent}
               </div>
-              <div className="h-px bg-white/[0.06]"></div>
             </div>
+          </header>
 
-            <div className="relative z-10 pt-[72px]">
-              <div className={getTransitionClasses()}>
-                {mainContent()}
-              </div>
+          <main className="bb-shell bb-main safe-bottom">
+            <div className={getTransitionClasses()}>
+              {mainContent()}
             </div>
-          </div>
+          </main>
         </div>
       </div>
     </WesMode>

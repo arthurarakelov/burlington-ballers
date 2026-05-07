@@ -42,6 +42,59 @@ export const convertTo12Hour = (time24) => {
   return `${displayHour}:${minutes} ${ampm}`;
 };
 
+export const GAME_DURATION_HOURS = 3;
+export const GAME_DELETE_GRACE_DAYS = 2;
+
+export const parseGameDateTime = (dateString, timeString) => {
+  if (!dateString || !timeString) return null;
+
+  const [year, month, day] = dateString.split('-').map(Number);
+  if (!year || !month || !day) return null;
+
+  const normalizedTime = String(timeString).trim();
+  let hours;
+  let minutes;
+
+  const twelveHourMatch = normalizedTime.match(/^(\d{1,2}):(\d{2})\s*([AP]M)$/i);
+  const twentyFourHourMatch = normalizedTime.match(/^(\d{1,2}):(\d{2})$/);
+
+  if (twelveHourMatch) {
+    hours = parseInt(twelveHourMatch[1], 10);
+    minutes = parseInt(twelveHourMatch[2], 10);
+    const modifier = twelveHourMatch[3].toUpperCase();
+
+    if (hours === 12) hours = 0;
+    if (modifier === 'PM') hours += 12;
+  } else if (twentyFourHourMatch) {
+    hours = parseInt(twentyFourHourMatch[1], 10);
+    minutes = parseInt(twentyFourHourMatch[2], 10);
+  } else {
+    return null;
+  }
+
+  if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) return null;
+
+  return new Date(year, month - 1, day, hours, minutes, 0, 0);
+};
+
+export const getGameEndDate = (dateString, timeString) => {
+  const startsAt = parseGameDateTime(dateString, timeString);
+  if (!startsAt) return null;
+
+  return new Date(startsAt.getTime() + GAME_DURATION_HOURS * 60 * 60 * 1000);
+};
+
+export const compareGamesByStartTime = (a, b) => {
+  const aStart = parseGameDateTime(a.date, a.time);
+  const bStart = parseGameDateTime(b.date, b.time);
+
+  if (!aStart && !bStart) return 0;
+  if (!aStart) return 1;
+  if (!bStart) return -1;
+
+  return aStart - bStart;
+};
+
 // Get today's date in YYYY-MM-DD format
 export const getTodayDate = () => {
   return new Date().toISOString().split('T')[0];
@@ -69,15 +122,23 @@ export const isValidGameDate = (dateString) => {
   return selectedDate >= today && selectedDate <= maxDate;
 };
 
-// Check if a game date/time is in the past (day after the game)
-export const isGameInPast = (dateString, timeString) => {
-  const gameDate = new Date(`${dateString} ${timeString}`);
-  const now = new Date();
-  
-  // Only delete games that are more than 24 hours old
-  const oneDayAfterGame = new Date(gameDate.getTime() + (24 * 60 * 60 * 1000));
-  return now > oneDayAfterGame;
+export const isGameCompleted = (dateString, timeString, now = new Date()) => {
+  const endsAt = getGameEndDate(dateString, timeString);
+  if (!endsAt) return false;
+
+  return now >= endsAt;
 };
+
+export const shouldAutoDeleteGame = (dateString, timeString, now = new Date()) => {
+  const endsAt = getGameEndDate(dateString, timeString);
+  if (!endsAt) return false;
+
+  const deleteAfter = new Date(endsAt.getTime() + GAME_DELETE_GRACE_DAYS * 24 * 60 * 60 * 1000);
+  return now >= deleteAfter;
+};
+
+// Backward-compatible name for cleanup callers.
+export const isGameInPast = shouldAutoDeleteGame;
 
 // Format date to include day of the week (e.g., "Saturday, 2025-08-23")
 export const formatDateWithDay = (dateString) => {
